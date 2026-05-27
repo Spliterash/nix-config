@@ -1,6 +1,6 @@
 {
   home.stateVersion = "25.11";
-  imports=[
+  imports = [
     ./home/soft/furryfox.nix
   ];
 }
