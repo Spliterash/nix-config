@@ -52,6 +52,7 @@
 
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.settings.General.Numlock = "on";
   services.desktopManager.plasma6.enable = true;
 
   # Configure keymap in X11
@@ -98,6 +99,7 @@
 
   # Install firefox.
   programs.nh.enable = true;
+  programs.nh.flake = "/home/spliterash/config";
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -114,6 +116,7 @@
     discord
     nixd
     claude-code
+    nixfmt
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     #  wget
   ];

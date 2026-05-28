@@ -1,0 +1,11 @@
+{
+    "nix.serverSettings": {
+        "nixd": {
+            "options": {
+                "home-manager": {
+                    "expr": "(builtins.getFlake (toString ./.)).nixosConfigurations.main.options.home-manager.users.type.getSubOptions []",
+                }
+            },
+        }
+    }
+}
