@@ -1,11 +1,25 @@
 {
+    "nix.enableLanguageServer": true,
+    "nix.serverPath": "nixd",
     "nix.serverSettings": {
         "nixd": {
-            "options": {
-                "home-manager": {
-                    "expr": "(builtins.getFlake (toString ./.)).nixosConfigurations.main.options.home-manager.users.type.getSubOptions []",
-                }
+            "formatting": {
+                "command": ["nixfmt"]
             },
+            "nixpkgs": {
+                "expr": "import (builtins.getFlake (toString ./.)).inputs.nixpkgs { }"
+            },
+            "options": {
+                "nixos": {
+                    "expr": "(builtins.getFlake (toString ./.)).nixosConfigurations.main.options"
+                },
+                "home-manager": {
+                    "expr": "(builtins.getFlake (toString ./.)).nixosConfigurations.main.options.home-manager.users.type.getSubOptions []"
+                },
+                "flake-schemas": {
+                    "expr": "let flake = builtins.getFlake (toString ./.); in flake.outputs"
+                }
+            }
         }
     }
 }

@@ -100,6 +100,10 @@
   # Install firefox.
   programs.nh.enable = true;
   programs.nh.flake = "/home/spliterash/config";
+  programs.kdeconnect.enable = true;
+  # Workaround for kdeconnect-app SIGSEGV in QML AOT lookup on DBus property
+  # TODO unstable
+  environment.sessionVariables.QML_DISABLE_DISK_CACHE = "1";
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
