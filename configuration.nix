@@ -13,6 +13,7 @@
   # Bootloader.
 
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 5;
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Use latest kernel.
@@ -30,6 +31,8 @@
 
   # Set your time zone.
   time.timeZone = "Europe/Moscow";
+  # Windows dualboot хранит в RTC локальное время, а не UTC
+  time.hardwareClockInLocalTime = true;
 
   # Select internationalisation properties.
   i18n.defaultLocale = "ru_RU.UTF-8";
