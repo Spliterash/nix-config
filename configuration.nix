@@ -90,6 +90,7 @@
   users.users.spliterash = {
     isNormalUser = true;
     description = "spliterash";
+    shell = pkgs.zsh;
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -99,6 +100,9 @@
       #  thunderbird
     ];
   };
+
+  programs.zsh.enable = true;
+  environment.shells = with pkgs; [ zsh ];
 
   # Install firefox.
   programs.nh.enable = true;
