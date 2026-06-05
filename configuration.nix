@@ -115,6 +115,7 @@
   environment.systemPackages = with pkgs; [
     git
     inxi
+    libnotify # notify-send
     vscode
     ayugram-desktop
     discord
