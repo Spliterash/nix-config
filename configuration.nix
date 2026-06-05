@@ -139,6 +139,8 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     git
+    git-lfs
+    jq
     inxi
     libnotify # notify-send
     vscode

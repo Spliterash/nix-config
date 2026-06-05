@@ -2,10 +2,12 @@
 {
   home.stateVersion = "25.11";
   imports = [
+    ./home/mutable-json.nix
     ./home/soft/furryfox.nix
     ./home/soft/vesktop.nix
     ./home/soft/idea.nix
     ./home/git.nix
+    ./home/soft/sourcegit.nix
     ./home/plasma.nix
     ./home/sound.nix
   ];
@@ -20,7 +22,9 @@
     nin = "nix build ~/config#flakeInputs -o ~/config/inputs";
   };
 
-  home.packages = with pkgs; [ zsh-completions ];
+  home.packages = with pkgs; [
+    zsh-completions
+  ];
 
   programs.fzf.enable = true;
   programs.bash.enable = true;

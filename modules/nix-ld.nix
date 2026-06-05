@@ -20,16 +20,21 @@
         libx11
         libxcb
         libxcomposite
+        libxcursor
         libxdamage
         libxext
         libxfixes
+        libxi
         libxkbcommon
         libxrandr
+        libxrender
+        libxtst
 
         at-spi2-atk
         alsa-lib
         cairo
         dbus
+        fontconfig
         freetype
         gdk-pixbuf
         glib
