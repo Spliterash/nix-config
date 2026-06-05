@@ -34,6 +34,9 @@
       # в меню приложений. См. https://discuss.kde.org/t/22698
       "kglobalshortcutsrc"."KDE Keyboard Layout Switcher"."Switch to Next Keyboard Layout" =
         "none,Alt+Shift\tnone\tSwitch to Next Keyboard Layout";
+      # Отключить Alt+F1 как вызов меню приложений — оставить только клавишу Meta.
+      "kglobalshortcutsrc"."plasmashell"."activate application launcher" =
+        "Meta,Meta\tAlt+F1,Вызвать меню запуска приложений";
     };
   };
   # Фигня чтобы shiftalt и altshift норм работали, а то заебало

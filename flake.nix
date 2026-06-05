@@ -20,6 +20,10 @@
       url = "github:nix-community/nix-jetbrains-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    freesmlauncher = {
+      url = "github:FreesmTeam/FreesmLauncher";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -42,7 +46,7 @@
       nixosConfigurations.main = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
-          inherit inputs;
+          inherit inputs system;
         };
         modules = [
           ./configuration.nix
@@ -50,6 +54,7 @@
           ./modules/java.nix
           ./modules/nix-ld.nix
           ./modules/wine.nix
+          ./modules/sunshine.nix
           ./modules/hardware/xbox.nix
           (
             { specialArgs, ... }:

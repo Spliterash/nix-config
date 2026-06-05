@@ -6,6 +6,8 @@
     ./home/soft/furryfox.nix
     ./home/soft/vesktop.nix
     ./home/soft/idea.nix
+    ./home/soft/freesm.nix
+
     ./home/git.nix
     ./home/soft/sourcegit.nix
     ./home/plasma.nix

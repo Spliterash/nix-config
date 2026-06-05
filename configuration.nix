@@ -34,6 +34,20 @@
   # Windows dualboot хранит в RTC локальное время, а не UTC
   time.hardwareClockInLocalTime = true;
 
+  # NTP-серверы для синхронизации времени (рабочие в России).
+  # systemd-timesyncd включён по умолчанию. services.timesyncd.servers пишется
+  # в `NTP=` (основной список); networking.timeServers ушёл бы только в
+  # `FallbackNTP=` (резерв в последнюю очередь) — поэтому задаём именно servers.
+  # vniiftri.ru — серверы Госслужбы времени (ВНИИФТРИ, Менделеево), stratum 1;
+  # ru.pool.ntp.org — российская зона глобального пула NTP как запасной вариант.
+  services.timesyncd.servers = [
+    "ntp1.vniiftri.ru"
+    "ntp2.vniiftri.ru"
+    "ntp3.vniiftri.ru"
+    "0.ru.pool.ntp.org"
+    "1.ru.pool.ntp.org"
+  ];
+
   # Select internationalisation properties.
   i18n.defaultLocale = "ru_RU.UTF-8";
 
