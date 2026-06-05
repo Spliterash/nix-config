@@ -1,0 +1,7 @@
+{
+    // Рекомендуемые расширения для этого репозитория.
+    // VSCode предложит установить их при открытии папки (или: Cmd/Ctrl+Shift+P → "Show Recommended Extensions").
+    "recommendations": [
+        "jnoortheen.nix-ide"
+    ]
+}

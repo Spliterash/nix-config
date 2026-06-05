@@ -1,4 +1,5 @@
 {
+    // ---- Nix language server (nixd) ----
     "nix.enableLanguageServer": true,
     "nix.serverPath": "nixd",
     "nix.serverSettings": {
@@ -6,8 +7,9 @@
             "formatting": {
                 "command": ["nixfmt"]
             },
+            // allowUnfree — иначе hover/дополнение по unfree-пакетам (jetbrains, vscode) падает с ошибкой eval
             "nixpkgs": {
-                "expr": "import (builtins.getFlake (toString ./.)).inputs.nixpkgs { }"
+                "expr": "import (builtins.getFlake (toString ./.)).inputs.nixpkgs { system = builtins.currentSystem; config.allowUnfree = true; }"
             },
             "options": {
                 "nixos": {
@@ -21,5 +23,28 @@
                 }
             }
         }
-    }
+    },
+
+    // ---- Комфорт для .nix файлов ----
+    "[nix]": {
+        "editor.defaultFormatter": "jnoortheen.nix-ide",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.suggest.insertMode": "replace"
+    },
+
+    // ---- Навигация по исходникам флейк-инпутов (папка ./inputs, см. алиас nin) ----
+    // Не следим за read-only симлинками в /nix/store — иначе watcher грузит CPU.
+    "files.watcherExclude": {
+        "**/inputs/**": true
+    },
+    // nixpkgs гигантский — исключаем из поиска, чтобы Ctrl+Shift+F не висел.
+    // Остальные инпуты (home-manager, nix-jetbrains-plugins, …) остаются в поиске.
+    "search.exclude": {
+        "inputs/nixpkgs": true,
+        "result": true
+    },
+    // Симлинки указывают в /nix/store — переходить по ним без подтверждений.
+    "explorer.excludeGitIgnore": false
 }

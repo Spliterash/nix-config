@@ -16,14 +16,29 @@
       url = "github:FlameFlag/nixcord";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-jetbrains-plugins = {
+      url = "github:nix-community/nix-jetbrains-plugins";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     { nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
     in
     {
+      #? Симлинк-ферма исходников всех флейк-инпутов — чтобы IDE могла по ним
+      #? ходить (поиск, "Go to File", чтение исходников вроде buildIdeWithPlugins).
+      #? Собрать рядом с проектом:  nix build .#flakeInputs -o inputs   (алиас nin)
+      packages.${system}.flakeInputs = pkgs.linkFarm "flake-inputs" (
+        nixpkgs.lib.mapAttrsToList (name: input: {
+          inherit name;
+          path = input.outPath;
+        }) (builtins.removeAttrs inputs [ "self" ])
+      );
+
       nixosConfigurations.main = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
@@ -50,6 +65,6 @@
         ];
 
       };
-      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-tree;
+      formatter.${system} = pkgs.nixfmt-tree;
     };
 }
