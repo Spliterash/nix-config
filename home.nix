@@ -7,6 +7,7 @@
     ./home/soft/idea.nix
     ./home/git.nix
     ./home/plasma.nix
+    ./home/sound.nix
   ];
 
   home.shellAliases = {

@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   imports = [
@@ -94,11 +94,29 @@
     extraGroups = [
       "networkmanager"
       "wheel"
+      "nopasswdlogin" # беспарольная разблокировка экрана KDE (см. security.pam ниже)
     ];
     packages = with pkgs; [
       kdePackages.kate
       #  thunderbird
     ];
+  };
+
+  # Беспарольная разблокировка экрана KDE (домашняя машина — лишний пароль не нужен).
+  # Разблокировка идёт через PAM-сервис `kde`; добавляем sufficient-правило ПЕРЕД pam_unix:
+  # членам группы nopasswdlogin пароль не спрашивается. Безопасно — если правило не подойдёт,
+  # PAM просто продолжит цепочку и спросит пароль, как раньше (залочиться невозможно).
+  # Логин в SDDM и sudo это НЕ затрагивает (у них свои PAM-сервисы).
+  users.groups.nopasswdlogin = { };
+  security.pam.services.kde.rules.auth.nopasswd = {
+    control = "sufficient";
+    modulePath = "${pkgs.pam}/lib/security/pam_succeed_if.so";
+    args = [
+      "user"
+      "ingroup"
+      "nopasswdlogin"
+    ];
+    order = config.security.pam.services.kde.rules.auth.unix.order - 10;
   };
 
   programs.zsh.enable = true;
