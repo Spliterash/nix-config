@@ -10,7 +10,9 @@
   ];
 
   home.shellAliases = {
-    nn = "sudo true && nh os switch ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
+    nhs = "sudo true && nh os switch ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
+    nhb = "sudo true && nh os boot ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
+
     nr = "nixos-rebuild repl --flake ~/config";
     nrr = "nix repl --file ~/config/repl.nix";
     # symlink-ферма исходников флейк-инпутов в ~/config/inputs (для навигации в IDE)
