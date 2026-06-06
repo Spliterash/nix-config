@@ -38,6 +38,35 @@ in
 
       tooltipDelay = 500;
     };
+
+    # Keyboard layouts + switching handled at the XKB layer (Plasma's kxkbrc).
+    # On Wayland this is the reliable mechanism; the KGlobalAccel "Switch to Next
+    # Keyboard Layout" shortcut below is disabled because a modifier-only bind
+    # (Shift+Alt) grabs Alt — stealing menubar focus — and eats a held Shift after
+    # a switch, so you can't keep Shift down to type capitals.
+    input.keyboard = {
+      layouts = [
+        { layout = "us"; }
+        { layout = "ru"; }
+      ];
+      # Left Alt + Left Shift toggles the group. Handled natively by libxkbcommon,
+      # so the held Shift keeps capitalising and Alt isn't globally grabbed.
+      options = [ "grp:lalt_lshift_toggle" ];
+      switchingPolicy = "global";
+    };
+
+    # Mouse settings captured from kcminputrc. vendorId/productId are hex (decoded
+    # to the decimal Libinput section path); name must match the device exactly,
+    # trailing space included, or Plasma won't apply it to the device.
+    input.mice = [
+      {
+        name = "COMPANY  USB Device ";
+        vendorId = "09DA";
+        productId = "50CA";
+        acceleration = 0.2; # PointerAcceleration=0.200
+        accelerationProfile = "none"; # PointerAccelerationProfile=1
+      }
+    ];
     kwin.titlebarButtons.left = [
       # MSF
       "more-window-actions"
@@ -149,9 +178,9 @@ in
     ];
 
     shortcuts = {
-      "KDE Keyboard Layout Switcher" = {
-        "Switch to Next Keyboard Layout" = "Shift+Alt";
-      };
+      # Disabled ([ ] writes `none`): layout switching is done via the XKB toggle
+      # in input.keyboard above, not via this modifier-only global shortcut.
+      "KDE Keyboard Layout Switcher"."Switch to Next Keyboard Layout" = [ ];
       "plasmashell" = {
         "activate application launcher" = "Meta";
       };
