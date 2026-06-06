@@ -68,7 +68,7 @@
   services.xserver.enable = false;
   services.xserver.xkb = {
     layout = "us,ru";
-    options = "grp:lalt_lshift_toggle";
+    options = "grp:win_space_toggle";
     # ,grp:lalt_lshift_toggle
     # ,ctrl:nocaps
   };

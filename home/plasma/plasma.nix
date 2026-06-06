@@ -35,7 +35,9 @@ in
     session.sessionRestore.restoreOpenApplicationsOnLogin = "startWithEmptySession";
 
     workspace = {
-
+      # Dark by default. Applied at login via `plasma-apply-lookandfeel -a`
+      # (appearance only, so it won't reset the custom panel/layout).
+      lookAndFeel = "org.kde.breezedark.desktop";
       tooltipDelay = 500;
     };
 
@@ -49,9 +51,10 @@ in
         { layout = "us"; }
         { layout = "ru"; }
       ];
-      # Left Alt + Left Shift toggles the group. Handled natively by libxkbcommon,
-      # so the held Shift keeps capitalising and Alt isn't globally grabbed.
-      options = [ "grp:lalt_lshift_toggle" ];
+      # Win+Space toggles the group (Windows 10/11 default; matches vladik's
+      # config). No Alt in the combo, so apps never see a lone Alt → no menu
+      # activation / focus loss, and a held Shift keeps capitalising after a switch.
+      options = [ "grp:win_space_toggle" ];
       switchingPolicy = "global";
     };
 
@@ -184,6 +187,13 @@ in
       "plasmashell" = {
         "activate application launcher" = "Meta";
       };
+
+      # Ctrl+Alt+T → WezTerm instead of the default terminal. Konsole's .desktop
+      # ships X-KDE-Shortcuts=Ctrl+Alt+T, so that binding wins regardless of
+      # TerminalApplication/TerminalService. Clear Konsole's _launch, then assign
+      # the same keys to WezTerm's .desktop.
+      "services/org.kde.konsole.desktop"."_launch" = "none";
+      "services/org.wezfurlong.wezterm.desktop"."_launch" = "Ctrl+Alt+T";
     };
 
     configFile = {
@@ -198,4 +208,18 @@ in
     gtk3.extraConfig.gtk-enable-mnemonics = 0;
     gtk4.extraConfig.gtk-enable-mnemonics = 0;
   };
+
+  # KDE's kded `gtkconfig` rewrites ~/.gtkrc-2.0 (and may touch the gtk3/gtk4
+  # settings.ini) at login to sync GTK apps with the Plasma theme. On the next
+  # `switch` Home Manager finds a foreign file there and tries to back it up —
+  # which aborts the whole activation when a `.backup` from the previous run
+  # already exists. Those backups only ever hold KDE-regenerated theme settings
+  # (recreated every login), so drop the stale ones before HM checks link
+  # targets. $DRY_RUN_CMD keeps `dry-activate` a no-op.
+  home.activation.dropStaleGtkBackups = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    $DRY_RUN_CMD rm -f $VERBOSE_ARG \
+      "$HOME/.gtkrc-2.0.backup" \
+      "$HOME/.config/gtk-3.0/settings.ini.backup" \
+      "$HOME/.config/gtk-4.0/settings.ini.backup"
+  '';
 }
