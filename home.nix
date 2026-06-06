@@ -11,7 +11,7 @@
 
     ./home/git.nix
     ./home/soft/sourcegit.nix
-    ./home/plasma.nix
+    ./home/plasma/plasma.nix
     ./home/sound.nix
   ];
 
