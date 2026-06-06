@@ -56,6 +56,10 @@ in
       # activation / focus loss, and a held Shift keeps capitalising after a switch.
       options = [ "grp:win_space_toggle" ];
       switchingPolicy = "global";
+      # NumLock включён при старте сессии (kcminputrc [Keyboard] NumLock).
+      # SDDM-настройка ниже отвечает только за экран входа; сессия Plasma при
+      # старте применяет своё значение и без этого гасит нумлок после бута.
+      numlockOnStartup = "on";
     };
 
     # Mouse settings captured from kcminputrc. vendorId/productId are hex (decoded
