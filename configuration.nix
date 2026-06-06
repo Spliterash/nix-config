@@ -2,13 +2,25 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, config, ... }:
+{
+  pkgs,
+  config,
+  inputs,
+  ...
+}:
 
 {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
   ];
+
+  # Хеш коммита конфига в генерации (столбец Configuration Revision в
+  # `nixos-rebuild list-generations`; также `nixos-version --configuration-revision`).
+  # self.rev — чистый коммит (дерево закоммичено), dirtyRev — "<хеш>-dirty" при
+  # незакоммиченных правках, иначе null (→ Unknown). На грязном дереве self.rev
+  # отсутствует, поэтому без dirtyRev eval бы падал — отсюда трёхступенчатый фолбэк.
+  system.configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
 
   # Bootloader.
 
