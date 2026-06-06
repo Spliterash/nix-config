@@ -70,6 +70,29 @@
         ];
 
       };
+
+      #? Отдельный home-manager-конфиг ТОЛЬКО ради .options для nixd (issue #705).
+      #? Опции от модулей-инпутов (programs.plasma, programs.nixcord) добавляются
+      #? через imports внутри home.nix, а main…getSubOptions [] их не видит (отдаёт
+      #? лишь статический тип сабмодуля). Импортируем home.nix ЦЕЛИКОМ — набор опций
+      #? всегда совпадает с реальным конфигом, перечислять модули руками не нужно.
+      #? Не собирается, нужен только .options; .vscode/settings.json мерджит их к
+      #? базовым (// nixd.options).
+      homeConfigurations.nixd = inputs.home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = { inherit inputs system; };
+        modules = [
+          ./home.nix
+          # home.nix не задаёт username/homeDirectory (в реальной системе их ставит
+          # NixOS-интеграция home-manager). Для standalone-конфига они обязательны,
+          # но на .options не влияют — поэтому значения фейковые.
+          {
+            home.username = "nixd";
+            home.homeDirectory = "/nixd";
+          }
+        ];
+      };
+
       formatter.${system} = pkgs.nixfmt-tree;
     };
 }

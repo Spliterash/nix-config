@@ -15,8 +15,11 @@
                 "nixos": {
                     "expr": "(builtins.getFlake (toString ./.)).nixosConfigurations.main.options"
                 },
+                // homeConfigurations.nixd импортирует весь home.nix, поэтому его
+                // .options — уже полный набор home-опций (базовые + programs.plasma /
+                // programs.nixcord из модулей-инпутов). getSubOptions [] не нужен. См. flake.nix.
                 "home-manager": {
-                    "expr": "(builtins.getFlake (toString ./.)).nixosConfigurations.main.options.home-manager.users.type.getSubOptions []"
+                    "expr": "(builtins.getFlake (toString ./.)).homeConfigurations.nixd.options"
                 },
                 "flake-schemas": {
                     "expr": "let flake = builtins.getFlake (toString ./.); in flake.outputs"

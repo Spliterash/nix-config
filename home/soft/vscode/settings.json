@@ -1,0 +1,25 @@
+{
+  "nix.enableLanguageServer": true,
+  "nix.serverPath": "nixd",
+  "nix.hiddenLanguageServerErrors": [
+    "textDocument/definition",
+    "textDocument/formatting",
+  ],
+  "security.workspace.trust.enabled": false,
+  "workbench.iconTheme": "vscode-icons",
+  "explorer.confirmDragAndDrop": false,
+  "files.autoSave": "afterDelay",
+  "claudeCode.preferredLocation": "panel",
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "chat.disableAIFeatures": true,
+  "redhat.telemetry.enabled": true,
+  "window.openFoldersInNewWindow": "on",
+  //! linux fixes
+  "window.dialogStyle": "custom",
+  "editor.selectionClipboard": false,
+  "settingsSync.keybindingsPerPlatform": false,
+  "update.mode": "manual",
+  "diffEditor.ignoreTrimWhitespace": false,
+  // "terminal.external.linuxExec": "wezterm",
+}

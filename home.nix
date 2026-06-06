@@ -7,6 +7,7 @@
     ./home/soft/vesktop.nix
     ./home/soft/idea.nix
     ./home/soft/freesm.nix
+    ./home/soft/vscode/vscode.nix
     ./home/soft/wezterm/wezterm.nix
 
     ./home/git.nix
@@ -18,6 +19,7 @@
   home.shellAliases = {
     nhs = "sudo true && nh os switch ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
     nhb = "sudo true && nh os boot ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
+    nht = "sudo true && nh os test ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
 
     nr = "nixos-rebuild repl --flake ~/config";
     nrr = "nix repl --file ~/config/repl.nix";

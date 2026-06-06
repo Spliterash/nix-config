@@ -25,10 +25,10 @@
   # Bootloader.
 
   boot.loader.systemd-boot.enable = true;
-  boot.loader.systemd-boot.configurationLimit = 5;
+  boot.loader.systemd-boot.configurationLimit = 15;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # ? Этот блок написан клодом, а то мне чёта не нравится мусор в бутменю, пофиг
+  # ? Этот блок написан клодом, а то мне чёта не нравится мусор в бутменю
   # Заголовки генераций → "[N] [хеш*] (YYYY-MM-DD HH:MM) сообщение". Штатный билдер
   # хардкодит формат и не даёт опции, поэтому переписываем title готовых записей
   # (version-строку не трогаем — по ней идёт сортировка, новые сверху). Хеш =
@@ -203,7 +203,6 @@
     jq
     inxi
     libnotify # notify-send
-    vscode
     ayugram-desktop
     discord
     nixd
