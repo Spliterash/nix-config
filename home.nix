@@ -7,6 +7,7 @@
     ./home/soft/vesktop.nix
     ./home/soft/idea.nix
     ./home/soft/freesm.nix
+    ./home/soft/wezterm/wezterm.nix
 
     ./home/git.nix
     ./home/soft/sourcegit.nix
