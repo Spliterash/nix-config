@@ -56,6 +56,8 @@
           ./modules/wine.nix
           ./modules/sunshine.nix
           ./modules/hardware/xbox.nix
+          ./modules/gaming/steam.nix
+
           (
             { specialArgs, ... }:
             {
