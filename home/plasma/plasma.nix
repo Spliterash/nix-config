@@ -120,7 +120,7 @@ in
             iconTasks = {
               launchers = map (dockApp: "applications:${dockApp}.desktop") meta.dock;
               behavior.grouping.clickAction = "showTooltips";
-              behavior.wheel.switchBetweenTasks = true;
+              settings.General.wheelEnabled = "AdjustVolume";
             };
           }
           "org.kde.plasma.marginsseparator"
@@ -201,8 +201,8 @@ in
           }
           {
             digitalClock = {
-              date.format = "isoDate";
-              time.showSeconds = "always";
+              date.position = "belowTime";
+              calendar.plugins = [ "holidaysevents" ];
               calendar.showWeekNumbers = true;
             };
           }
@@ -232,6 +232,7 @@ in
       "spectaclerc"."General"."launchAction" = "UseLastUsedCapturemode";
       "spectaclerc"."GuiConfig"."captureMode" = 0;
       "spectaclerc"."GuiConfig"."quitAfterSaveCopyExport" = true;
+      "plasma_calendar_holiday_regions"."General"."selectedRegions" = "ru_ru";
     };
   };
   gtk = {
