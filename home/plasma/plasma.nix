@@ -211,6 +211,9 @@ in
       }
     ];
 
+    # Убрать дроп иконок (хз наскок это рабочее, но пока пофигу)
+    startup.desktopScript.panels.preCommands = lib.mkForce "";
+
     shortcuts = {
       # Disabled ([ ] writes `none`): layout switching is done via the XKB toggle
       # in input.keyboard above, not via this modifier-only global shortcut.
@@ -235,23 +238,4 @@ in
       "plasma_calendar_holiday_regions"."General"."selectedRegions" = "ru_ru";
     };
   };
-  gtk = {
-    enable = true;
-    gtk3.extraConfig.gtk-enable-mnemonics = 0;
-    gtk4.extraConfig.gtk-enable-mnemonics = 0;
-  };
-
-  # KDE's kded `gtkconfig` rewrites ~/.gtkrc-2.0 (and may touch the gtk3/gtk4
-  # settings.ini) at login to sync GTK apps with the Plasma theme. On the next
-  # `switch` Home Manager finds a foreign file there and tries to back it up —
-  # which aborts the whole activation when a `.backup` from the previous run
-  # already exists. Those backups only ever hold KDE-regenerated theme settings
-  # (recreated every login), so drop the stale ones before HM checks link
-  # targets. $DRY_RUN_CMD keeps `dry-activate` a no-op.
-  home.activation.dropStaleGtkBackups = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    $DRY_RUN_CMD rm -f $VERBOSE_ARG \
-      "$HOME/.gtkrc-2.0.backup" \
-      "$HOME/.config/gtk-3.0/settings.ini.backup" \
-      "$HOME/.config/gtk-4.0/settings.ini.backup"
-  '';
 }
