@@ -30,7 +30,26 @@ in
     hotkeys.commands = lib.attrsets.mergeAttrsList [
       (mkPlasmaBinds meta.shortcuts)
     ];
-    kscreenlocker.timeout = 15;
+    # Чёрная «заставка» по простою вместо отдельного скринсейвера (в Plasma 6 его убрали).
+    # Официальный путь от мейнтейнера KDE: использовать локскрин как заставку и разрешить
+    # разблокировку без пароля. См. https://discuss.kde.org/t/screensavers-and-plasma-6-wayland/8959
+    kscreenlocker = {
+      autoLock = true; # срабатывать по простою
+      timeout = 1; # через 1 минуту
+      passwordRequired = false; # снимать БЕЗ пароля (то самое «отключить блокировку»)
+      lockOnResume = false; # и не спрашивать после выхода из сна
+      appearance = {
+        wallpaperPlainColor = "0,0,0"; # сплошной чёрный фон
+        alwaysShowClock = false; # без часов — чистый чёрный
+        showMediaControls = false; # без медиа-контролов
+      };
+    };
+
+    # Монитор НЕ гасить (никакого DPMS) и не приглушать яркость — только чёрная заливка.
+    powerdevil.AC = {
+      turnOffDisplay.idleTimeout = "never";
+      dimDisplay.enable = false;
+    };
     #! broken logout session.sessionRestore.restoreOpenApplicationsOnLogin = "whenSessionWasManuallySaved";
     session.sessionRestore.restoreOpenApplicationsOnLogin = "startWithEmptySession";
 
@@ -101,6 +120,7 @@ in
             iconTasks = {
               launchers = map (dockApp: "applications:${dockApp}.desktop") meta.dock;
               behavior.grouping.clickAction = "showTooltips";
+              behavior.wheel.switchBetweenTasks = true;
             };
           }
           "org.kde.plasma.marginsseparator"
@@ -149,12 +169,16 @@ in
               ];
             };
           }
+          # Динамик отдельным виджетом на панели, а не в трее: иконка во всю высоту
+          # бара — крупная фиксированная зона, по которой удобно крутить громкость
+          # колёсиком (в маленький трей-значок целиться неудобно). Сам трей-вариант
+          # ниже убран в hidden, чтобы не было двух динамиков.
+          "org.kde.plasma.volume"
           {
             systemTray = {
               icons.spacing = "small";
               items = {
                 shown = [
-                  "org.kde.plasma.volume"
                   "org.kde.plasma.battery"
                   "org.kde.plasma.brightness"
                   "org.kde.plasma.bluetooth"
@@ -164,6 +188,9 @@ in
                 # org.kde.plasma.cameraindicator,    org.kde.plasma.devicenotifier
                 # org.kde.plasma.manage-inputmethod, org.kde.plasma.notifications, org.kde.plasma.keyboardindicator
                 hidden = [
+                  # Громкость вынесена на панель отдельным виджетом (см. выше);
+                  # в трее держим её скрытой, чтобы значок не дублировался.
+                  "org.kde.plasma.volume"
                   "org.kde.kscreen"
                   "org.kde.plasma.clipboard"
                   "org.kde.plasma.mediacontroller"
