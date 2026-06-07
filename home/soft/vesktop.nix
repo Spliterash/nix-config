@@ -7,9 +7,7 @@
   programs.nixcord = {
     enable = true;
     discord = {
-      # enable = false;
-      # branch = "canary";
-      autoscroll.enable = true;
+      commandLineArgs = [ "--enable-blink-features=MiddleClickAutoscroll" ];
       openASAR.enable = false;
     };
     vesktop = {

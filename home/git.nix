@@ -3,7 +3,7 @@
   programs.git = {
     enable = true;
     lfs.enable = true;
-    extraConfig = {
+    settings = {
       core.fileMode = false;
       core.autocrlf = "input";
     };
