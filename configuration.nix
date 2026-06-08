@@ -113,12 +113,6 @@
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = false;
-  services.xserver.xkb = {
-    layout = "us,ru";
-    options = "grp:win_space_toggle";
-    # ,grp:lalt_lshift_toggle
-    # ,ctrl:nocaps
-  };
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.displayManager.sddm.settings.General.Numlock = "on";
@@ -162,33 +156,13 @@
     ];
   };
 
-  # Беспарольная разблокировка экрана KDE (домашняя машина — лишний пароль не нужен).
-  # Разблокировка идёт через PAM-сервис `kde`; добавляем sufficient-правило ПЕРЕД pam_unix:
-  # членам группы nopasswdlogin пароль не спрашивается. Безопасно — если правило не подойдёт,
-  # PAM просто продолжит цепочку и спросит пароль, как раньше (залочиться невозможно).
-  # Логин в SDDM и sudo это НЕ затрагивает (у них свои PAM-сервисы).
-  users.groups.nopasswdlogin = { };
-  security.pam.services.kde.rules.auth.nopasswd = {
-    control = "sufficient";
-    modulePath = "${pkgs.pam}/lib/security/pam_succeed_if.so";
-    args = [
-      "user"
-      "ingroup"
-      "nopasswdlogin"
-    ];
-    order = config.security.pam.services.kde.rules.auth.unix.order - 10;
-  };
-
   programs.zsh.enable = true;
   environment.shells = with pkgs; [ zsh ];
 
-  # Install firefox.
   programs.nh.enable = true;
   programs.nh.flake = "/home/spliterash/config";
+
   programs.kdeconnect.enable = true;
-  # Workaround for kdeconnect-app SIGSEGV in QML AOT lookup on DBus property
-  # TODO unstable
-  environment.sessionVariables.QML_DISABLE_DISK_CACHE = "1";
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -204,7 +178,6 @@
     inxi
     libnotify # notify-send
     ayugram-desktop
-    discord
     nixd
     claude-code
     nixfmt

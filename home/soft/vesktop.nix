@@ -7,6 +7,7 @@
   programs.nixcord = {
     enable = true;
     discord = {
+      enable = false;
       commandLineArgs = [ "--enable-blink-features=MiddleClickAutoscroll" ];
       openASAR.enable = false;
     };
