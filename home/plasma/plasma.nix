@@ -95,7 +95,6 @@ in
         location = "bottom";
         floating = true;
         height = 44;
-        # screen = 0;
         screen = "all";
         widgets = [
           {
@@ -130,37 +129,6 @@ in
               };
             };
           }
-          {
-            systemMonitor = {
-              title = "RAM Usage";
-              displayStyle = "org.kde.ksysguard.linechart";
-              sensors = [
-                {
-                  name = "memory/physical/usedPercent";
-                  color = "0,255,0";
-                  label = "RAM %";
-                }
-                {
-                  name = "cpu/all/usage";
-                  color = "255,0,0";
-                  label = "CPU %";
-                }
-              ];
-              totalSensors = [
-                "memory/physical/used"
-                "memory/physical/usedPercent"
-              ];
-              textOnlySensors = [
-                "memory/physical/used"
-                "memory/physical/total"
-                "cpu/all/coreCount"
-              ];
-            };
-          }
-          # Динамик отдельным виджетом на панели, а не в трее: иконка во всю высоту
-          # бара — крупная фиксированная зона, по которой удобно крутить громкость
-          # колёсиком (в маленький трей-значок целиться неудобно). Сам трей-вариант
-          # ниже убран в hidden, чтобы не было двух динамиков.
           "org.kde.plasma.volume"
           {
             systemTray = {
@@ -176,8 +144,6 @@ in
                 # org.kde.plasma.cameraindicator,    org.kde.plasma.devicenotifier
                 # org.kde.plasma.manage-inputmethod, org.kde.plasma.notifications, org.kde.plasma.keyboardindicator
                 hidden = [
-                  # Громкость вынесена на панель отдельным виджетом (см. выше);
-                  # в трее держим её скрытой, чтобы значок не дублировался.
                   "org.kde.plasma.volume"
                   "org.kde.kscreen"
                   "org.kde.plasma.clipboard"
@@ -198,9 +164,6 @@ in
         ];
       }
     ];
-
-    startup.desktopScript.panels.runAlways = true;
-
     shortcuts = {
       # Ctrl+Alt+T → WezTerm instead of the default terminal. Konsole's .desktop
       # ships X-KDE-Shortcuts=Ctrl+Alt+T, so that binding wins regardless of
