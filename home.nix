@@ -13,7 +13,7 @@
     ./home/git.nix
     ./home/soft/sourcegit.nix
     ./home/plasma/plasma.nix
-    ./home/sound.nix
+    ./home/sound/sound.nix
   ];
 
   home.shellAliases = {

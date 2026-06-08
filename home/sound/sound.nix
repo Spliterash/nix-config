@@ -1,8 +1,5 @@
 {
   services.easyeffects.enable = true;
-  dconf.settings."com/github/wwmm/easyeffects" = {
-    process-all-inputs = true;
-  };
   # https://github.com/Digitalone1/EasyEffects-Presets
   services.easyeffects.preset = "LoudnessEqualizer";
   services.easyeffects.extraPresets = {
@@ -22,13 +19,6 @@
         }
       )
     );
-    MicClear = builtins.fromJSON (
-      builtins.readFile (
-        builtins.fetchurl {
-          url = "https://gist.githubusercontent.com/jtrv/47542c8be6345951802eebcf9dc7da31/raw";
-          sha256 = "sha256-taDkpQLEsenfIpQuKpcH8jvVUOcQ8bx50SJgCztdSvU=";
-        }
-      )
-    );
+    MicClear = builtins.fromJSON (builtins.readFile ./MicClear.json);
   };
 }

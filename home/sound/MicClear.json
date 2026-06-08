@@ -1,0 +1,53 @@
+{
+    "input": {
+        "blocklist": [],
+        "plugins_order": [
+            "echo_canceller#0",
+            "rnnoise#0",
+            "speex#0"
+        ],
+        "echo_canceller#0": {
+            "bypass": false,
+            "input-gain": 0.0,
+            "output-gain": 0.0,
+            "echo-canceller": {
+                "enable": true,
+                "mobile-mode": false,
+                "enforce-high-pass": true,
+                "automatic-gain-control": false
+            },
+            "noise-suppression": {
+                "enable": false,
+                "level": "Moderate"
+            },
+            "high-pass": {
+                "enable": true,
+                "full-band": true
+            }
+        },
+        "rnnoise#0": {
+            "bypass": false,
+            "enable-vad": true,
+            "input-gain": 0.0,
+            "model-name": "",
+            "output-gain": 0.0,
+            "release": 20.0,
+            "vad-thres": 50.0,
+            "wet": 0.0
+        },
+        "speex#0": {
+            "bypass": false,
+            "enable-agc": true,
+            "enable-denoise": true,
+            "enable-dereverb": true,
+            "input-gain": 0.0,
+            "noise-suppression": -70,
+            "output-gain": 0.0,
+            "vad": {
+                "enable": true,
+                "probability-continue": 90,
+                "probability-start": 95
+            }
+        }
+    }
+}
