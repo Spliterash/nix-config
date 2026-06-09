@@ -55,6 +55,7 @@
           ./modules/sunshine.nix
           ./modules/hardware/xbox.nix
           ./modules/gaming/steam.nix
+          ./modules/powersaving.nix
 
           (
             { specialArgs, ... }:
