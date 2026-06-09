@@ -148,6 +148,7 @@
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.spliterash = {
+    hashedPassword = "$y$j9T$sDul5xTFeiGQyorzE4Hhs.$DAp3OxAIVl4u4pWA6FQxJ2B1.Ge57E985FICueLwZz9";
     isNormalUser = true;
     description = "spliterash";
     shell = pkgs.zsh;
