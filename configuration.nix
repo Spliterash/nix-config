@@ -127,20 +127,19 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  # Enable sound with pipewire.
-  services.pulseaudio.enable = false;
+  # Sound. Stolen from Владик
   security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
+  services.pipewire.enable = true;
+  services.pipewire.extraConfig.pipewire = {
+    "10-fix-popping" = {
+      #? https://ventureo.codeberg.page/source/sound.html#choppy-audio
+      "context.properties" = {
+        #? multiply min-quantum while sound still popping (starting from 512)
+        "default.clock.min-quantum" = 1024;
+        "default.clock.quantum" = 4096;
+        "default.clock.max-quantum" = 8192;
+      };
+    };
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
