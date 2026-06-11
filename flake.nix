@@ -57,6 +57,7 @@
           ./modules/gaming/steam.nix
           ./modules/powersaving.nix
           ./modules/vm.nix
+          ./modules/nodejs.nix
 
           (
             { specialArgs, ... }:
