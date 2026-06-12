@@ -142,8 +142,7 @@
     "10-fix-popping" = {
       #? https://ventureo.codeberg.page/source/sound.html#choppy-audio
       "context.properties" = {
-        #? multiply min-quantum while sound still popping (starting from 512)
-        "default.clock.min-quantum" = 1024;
+        "default.clock.min-quantum" = 2048;
         "default.clock.quantum" = 4096;
         "default.clock.max-quantum" = 8192;
       };
