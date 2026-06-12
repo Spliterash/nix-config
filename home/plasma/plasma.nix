@@ -49,6 +49,10 @@ in
     powerdevil.AC = {
       turnOffDisplay.idleTimeout = "never";
       dimDisplay.enable = false;
+      autoSuspend = {
+        action = "sleep";
+        idleTimeout = 3600;
+      };
     };
     #! broken logout session.sessionRestore.restoreOpenApplicationsOnLogin = "whenSessionWasManuallySaved";
     session.sessionRestore.restoreOpenApplicationsOnLogin = "startWithEmptySession";

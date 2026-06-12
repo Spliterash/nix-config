@@ -126,6 +126,9 @@ in
           "gfx.x11-egl.force-enabled" = true;
           "widget.dmabuf.force-enabled" = true;
 
+          # по идее должно запретить фуррифоксу гасить сон, но я хз
+          "dom.wakelock.enabled" = false;
+
           #? https://github.com/FirefoxCSS-Store/FirefoxCSS-Store.github.io/blob/main/README.md#generic-installation
           "sidebar.revamp" = false;
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
