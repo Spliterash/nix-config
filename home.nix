@@ -3,7 +3,7 @@
   home.stateVersion = "25.11";
   imports = [
     ./home/mutable-json.nix
-    ./home/soft/furryfox.nix
+    ./home/soft/furryfox/furryfox.nix
     ./home/soft/vesktop.nix
     ./home/soft/idea.nix
     ./home/soft/freesm.nix

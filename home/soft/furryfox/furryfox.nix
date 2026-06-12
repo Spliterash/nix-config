@@ -1,5 +1,33 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
+let
+  iconSizes = [
+    "16x16"
+    "32x32"
+    "48x48"
+    "64x64"
+    "128x128"
+    "256x256"
+  ];
+  mkIcon =
+    size:
+    pkgs.runCommandLocal "furryfox-icon-${size}.png" {
+      nativeBuildInputs = [ pkgs.imagemagick ];
+    } "magick ${./icon.png} -resize ${size} png:$out";
+in
 {
+  xdg.dataFile =
+    builtins.listToAttrs (
+      map (s: {
+        name = "icons/hicolor/${s}/apps/firefox.png";
+        value.source = mkIcon s;
+      }) iconSizes
+    )
+    // {
+      "applications/firefox.desktop".text =
+        builtins.replaceStrings [ "Name=Firefox" ] [ "Name=FurryFox" ]
+          (builtins.readFile "${config.programs.firefox.finalPackage}/share/applications/firefox.desktop");
+    };
+
   #? firefox pwa, if I ever need it
   # programs.firefoxpwa.enable = true;
   programs.firefox = {
