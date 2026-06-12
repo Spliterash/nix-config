@@ -177,6 +177,8 @@ in
       }
     ];
     shortcuts = {
+      "plasmashell"."activate application launcher" = "";
+
       # Ctrl+Alt+T → WezTerm instead of the default terminal. Konsole's .desktop
       # ships X-KDE-Shortcuts=Ctrl+Alt+T, so that binding wins regardless of
       # TerminalApplication/TerminalService. Clear Konsole's _launch, then assign
