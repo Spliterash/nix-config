@@ -124,6 +124,14 @@
   services.displayManager.sddm.settings.General.Numlock = "on";
   services.desktopManager.plasma6.enable = true;
 
+  # Автологин без экрана входа. SDDM сам пропускает выбор юзера и сразу грузит
+  # единственную сессию (Plasma 6). В VM свой autoLogin внутри vmVariant
+  # (modules/vm.nix) — он этот блок не отменяет, оба про одного юзера.
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = "spliterash";
+  };
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
@@ -154,7 +162,6 @@
     extraGroups = [
       "networkmanager"
       "wheel"
-      "nopasswdlogin" # беспарольная разблокировка экрана KDE (см. security.pam ниже)
     ];
     packages = with pkgs; [
       kdePackages.kate
