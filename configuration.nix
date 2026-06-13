@@ -191,6 +191,7 @@
     libnotify # notify-send
     ayugram-desktop
     nixd
+    sshfs
     claude-code
     nixfmt
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
