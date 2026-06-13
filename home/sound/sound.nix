@@ -1,7 +1,5 @@
 {
   services.easyeffects.enable = true;
-  # https://github.com/Digitalone1/EasyEffects-Presets
-  services.easyeffects.preset = "LoudnessEqualizer";
   services.easyeffects.extraPresets = {
     LoudnessEqualizer = builtins.fromJSON (
       builtins.readFile (
