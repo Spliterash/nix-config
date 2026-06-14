@@ -18,5 +18,6 @@
       )
     );
     MicClear = builtins.fromJSON (builtins.readFile ./MicClear.json);
+    MicClearClaude = builtins.fromJSON (builtins.readFile ./MicClearClaude.json);
   };
 }
