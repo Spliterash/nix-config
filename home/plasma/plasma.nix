@@ -181,7 +181,7 @@ in
       }
     ];
     shortcuts = {
-      "plasmashell"."activate application launcher" = "";
+      "plasmashell"."activate application launcher" = "Meta";
 
       # Ctrl+Alt+T → WezTerm instead of the default terminal. Konsole's .desktop
       # ships X-KDE-Shortcuts=Ctrl+Alt+T, so that binding wins regardless of
@@ -189,6 +189,9 @@ in
       # the same keys to WezTerm's .desktop.
       "services/org.kde.konsole.desktop"."_launch" = "none";
       "services/org.wezfurlong.wezterm.desktop"."_launch" = "Ctrl+Alt+T";
+      "services/org.kde.plasma-systemmonitor.desktop"."_launch" = [
+        "Ctrl+Shift+Esc"
+      ];
     };
 
     configFile = {

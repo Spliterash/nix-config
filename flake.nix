@@ -58,6 +58,7 @@
           ./modules/powersaving.nix
           ./modules/vm.nix
           ./modules/nodejs.nix
+          ./modules/docker.nix
 
           (
             { specialArgs, ... }:
