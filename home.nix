@@ -18,5 +18,7 @@
     ./home/shell/aliases.nix
     ./home/shell/zsh.nix
     ./home/shell/fzf.nix
+
+    ./home/soft/bruno.nix
   ];
 }
