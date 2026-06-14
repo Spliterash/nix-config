@@ -104,7 +104,8 @@ in
       "on-all-desktops"
       "keep-above-windows"
     ];
-
+    # ?! Если раскоментить, то слетают иконки после каждого едита
+    /*
     panels = [
       # Windows-like panel at the bottom
       {
@@ -180,6 +181,8 @@ in
         ];
       }
     ];
+    */
+
     shortcuts = {
       "plasmashell"."activate application launcher" = "Meta";
 

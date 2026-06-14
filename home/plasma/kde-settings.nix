@@ -12,7 +12,7 @@
 
   programs.plasma = {
     enable = true;
-    overrideConfig = true;
+    overrideConfig = false;
     configFile = {
       "kdeglobals"."General"."TerminalApplication" = "wezterm";
       "kdeglobals"."General"."TerminalService" = "org.wezfurlong.wezterm.desktop";
