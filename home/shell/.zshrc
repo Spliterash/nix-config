@@ -72,13 +72,12 @@ ssh_mux() {
     ssh -o ControlMaster=auto -o ControlPath="$SSH_MUX_DIR/%C" -o ControlPersist=60 "$@"
 }
 
-#? Список хостов из ~/.ssh/config (без wildcard-паттернов) — общий для
-#? автокомплита sshe и обычного ssh.
 _ssh_config_hosts() {
-    awk '/^[Hh]ost / {for(i=2;i<=NF;i++) print $i}' ~/.ssh/config 2>/dev/null | grep -v '[*?]'
+    grep -E '^Host ' ~/.ssh/config | awk '{print $2}'
 }
 
-sshe() {
+# ssh (m)ount
+sshm() {
     local host=$1 subpath=$2
     local mnt=$SSHFS_BASE/$host
     mkdir -p "$mnt" || return 1
@@ -93,7 +92,7 @@ sshe() {
     fi
 }
 
-_sshe() {
+_sshm() {
     if (( CURRENT == 2 )); then
         local -a hosts
         hosts=(${(f)"$(_ssh_config_hosts)"})
@@ -122,29 +121,101 @@ _sshe() {
         compadd -- $files
     fi
 }
-compdef _sshe sshe
+compdef _sshm sshm
 
-sshc() {
+# ssh (u)nmount
+sshu() {
     local mnt found=0
     for mnt in "$SSHFS_BASE"/*(N/); do
         if mount | grep -q " $mnt .*fuse\.sshfs"; then
             if fusermount -u "$mnt" 2>/dev/null || umount "$mnt" 2>/dev/null; then
                 echo "unmounted: $mnt"
                 rmdir "$mnt" 2>/dev/null
-                found=1
             else
-                echo "failed to unmount: $mnt (открыт в приложении?)"
+                echo "failed to unmount: $mnt (opened in app?)"
             fi
+            found=1
         elif mount | grep -q " $mnt "; then
             echo "skip: $mnt (не sshfs, не трогаю)"
         else
             rmdir "$mnt" 2>/dev/null
         fi
     done
-    (( found )) || echo "Нечего размонтировать"
+    (( found )) || echo "Nothing to unmount"
+}
+# ssh (c)onnect
+sshc() {
+    ssh "$@"
+}
+_sshc() {
+    local -a hosts
+    hosts=(${(f)"$(_ssh_config_hosts)"})
+    _describe 'host' hosts
 }
 
-#? Чиним автокомплит хостов для обычного ssh/scp/sftp: по умолчанию zsh тащит
-#? мусор из /etc/hosts и ~/.ssh/known_hosts. Берём только хосты из ~/.ssh/config.
-#? zstyle -e вычисляет список на каждый таб, так что правки конфига видны сразу.
-zstyle -e ':completion:*:(ssh|scp|sftp|slogin):*' hosts 'reply=(${(f)"$(_ssh_config_hosts)"})'
+compdef _sshc sshc
+
+# ssh (i)nit — завести новый сервер «под ключ»:
+#?   sshi user@ip <name> [key]
+#?   1) копирует публичный ключ на сервер (ssh-copy-id, спросит пароль сервера),
+#?   2) дописывает Host в ~/.ssh/config,
+#?   3) опционально отключает парольный вход на сервере (спросит подтверждение).
+#? key — имя ключа в ~/.ssh (по умолчанию id_rsa).
+sshi() {
+    emulate -L zsh
+    local target=$1 name=$2 key=${3:-id_rsa}
+    if [[ -z $target || -z $name ]]; then
+        echo "usage: sshi user@ip <name> [key]" >&2
+        return 1
+    fi
+    local user=${target%@*} ip=${target##*@}
+    if [[ $target != *@* || -z $user || -z $ip ]]; then
+        echo "sshi: первый аргумент должен быть в формате user@ip" >&2
+        return 1
+    fi
+
+    local priv="$HOME/.ssh/$key" pub="$HOME/.ssh/$key.pub"
+    if [[ ! -f $priv || ! -f $pub ]]; then
+        echo "sshi: нет ключа $priv(.pub). Создай: ssh-keygen -t ed25519 -f $priv" >&2
+        return 1
+    fi
+
+    local cfg="$HOME/.ssh/config"
+    [[ -d "$HOME/.ssh" ]] || { mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"; }
+    [[ -f $cfg ]] || { touch "$cfg" && chmod 600 "$cfg"; }
+    if awk -v n="$name" '
+        tolower($1)=="host" { for (i=2;i<=NF;i++) if ($i==n) { found=1; exit } }
+        END { exit !found }
+    ' "$cfg"; then
+        echo "sshi: Host '$name' уже есть в $cfg — отменяю, чтобы не плодить дубли" >&2
+        return 1
+    fi
+
+    echo ":: 1/3 копирую ключ $key.pub на $target (введи пароль сервера)"
+    ssh-copy-id -i "$pub" "$target" || { echo "sshi: ssh-copy-id не сработал" >&2; return 1; }
+
+    echo ":: 2/3 пишу Host '$name' в $cfg"
+    cat >> "$cfg" <<EOF
+
+Host $name
+    HostName $ip
+    User $user
+    IdentityFile ~/.ssh/$key
+    IdentitiesOnly yes
+EOF
+
+    echo ":: 3/3 Отключение парольного входа на сервере (опционально)"
+    local ans
+    read "ans?Отключить парольный вход на '$name'? Убедись, что заходишь по ключу! [y/N] "
+    if [[ ${ans:l} == y* ]]; then
+        if ssh -t "$name" "echo 'PasswordAuthentication no' | sudo tee /etc/ssh/sshd_config.d/99-disable-password.conf && sudo service ssh restart"; then
+            echo ":: парольный вход отключён"
+        else
+            echo "sshi: не удалось отключить пароль" >&2
+            return 1
+        fi
+    else
+        echo ":: пропускаю, пароль оставлен включённым"
+    fi
+    echo ":: готово → ssh $name"
+}
