@@ -20,5 +20,7 @@
     ./home/shell/fzf.nix
 
     ./home/soft/bruno.nix
+
+    ./home/soft/ollama.nix
   ];
 }
