@@ -59,6 +59,7 @@
           ./modules/vm.nix
           ./modules/nodejs.nix
           ./modules/docker.nix
+          ./modules/btop.nix
 
           (
             { specialArgs, ... }:
