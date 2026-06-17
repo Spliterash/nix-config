@@ -60,6 +60,7 @@
           ./modules/nodejs.nix
           ./modules/docker.nix
           ./modules/btop.nix
+          ./modules/python.nix
 
           (
             { specialArgs, ... }:

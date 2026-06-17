@@ -181,6 +181,8 @@
   xdg.mime.defaultApplications = {
     "text/plain" = [ "code.desktop" ];
   };
+  documentation.doc.enable = false;
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
