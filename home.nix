@@ -22,5 +22,6 @@
     ./home/soft/bruno.nix
 
     ./home/soft/ollama.nix
+    ./home/soft/media.nix
   ];
 }
