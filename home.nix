@@ -5,7 +5,7 @@
     ./home/mutable-json.nix
     ./home/soft/furryfox/furryfox.nix
     ./home/soft/vesktop.nix
-    ./home/soft/idea.nix
+    ./home/soft/jetbrains/idea.nix
     ./home/soft/freesm.nix
     ./home/soft/vscode/vscode.nix
     ./home/soft/wezterm/wezterm.nix
