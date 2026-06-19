@@ -11,7 +11,7 @@
 # Хостовые fileSystems (btrfs-сабволы, NTFS /mnt/data) qemu-vm перетирает через
 # mkVMOverride своими виртуальными монтированиями — VM получает чистый qcow2-root
 # и не виснет на отсутствующих разделах.
-{ ... }:
+{ username, ... }:
 {
   virtualisation.vmVariant.virtualisation = {
     # Ресурсы. Дефолты (1 ядро / 1024 МиБ) для Plasma 6 непригодны.
@@ -53,6 +53,6 @@
   # тестировать именно экран входа SDDM — закомментировать этот блок.
   virtualisation.vmVariant.services.displayManager.autoLogin = {
     enable = true;
-    user = "spliterash";
+    user = username;
   };
 }

@@ -30,6 +30,8 @@
     { nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
+      settings = import ./settings.nix;
+      inherit (settings) username;
       pkgs = nixpkgs.legacyPackages.${system};
     in
     {
@@ -45,7 +47,8 @@
         inherit system;
         specialArgs = {
           inherit inputs system;
-        };
+        }
+        // settings;
         modules = [
           ./configuration.nix
           ./nix.nix
@@ -68,7 +71,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = specialArgs;
-              home-manager.users.spliterash = ./home.nix;
+              home-manager.users.${username} = ./home.nix;
               home-manager.backupFileExtension = "backup";
             }
           )
@@ -80,7 +83,10 @@
       #? Залупа чтобы работал лангуаге сервер в хом менеджере
       homeConfigurations.nixd = inputs.home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit inputs system; };
+        extraSpecialArgs = {
+          inherit inputs system;
+        }
+        // settings;
         modules = [
           ./home.nix
           # home.nix не задаёт username/homeDirectory (в реальной системе их ставит

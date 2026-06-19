@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, username, ... }:
 let
   #? В nixpkgs Sunshine отстаёт (2025.924.154138). Берём свежую версию
   #? 2026.516.143833 из ещё не влитого PR nixpkgs #521906 — там уже
@@ -37,7 +37,7 @@ in
     autoStart = true;
   };
 
-  users.users.spliterash = {
+  users.users.${username} = {
     extraGroups = [
       "uinput"
       "input"

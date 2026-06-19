@@ -6,6 +6,7 @@
   pkgs,
   config,
   inputs,
+  username,
   ...
 }:
 
@@ -129,7 +130,7 @@
   # (modules/vm.nix) — он этот блок не отменяет, оба про одного юзера.
   services.displayManager.autoLogin = {
     enable = true;
-    user = "spliterash";
+    user = username;
   };
 
   # Enable CUPS to print documents.
@@ -153,10 +154,10 @@
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.spliterash = {
+  users.users.${username} = {
     hashedPassword = "$y$j9T$sDul5xTFeiGQyorzE4Hhs.$DAp3OxAIVl4u4pWA6FQxJ2B1.Ge57E985FICueLwZz9";
     isNormalUser = true;
-    description = "spliterash";
+    description = username;
     shell = pkgs.zsh;
     extraGroups = [
       "networkmanager"
@@ -172,7 +173,7 @@
   environment.shells = with pkgs; [ zsh ];
 
   programs.nh.enable = true;
-  programs.nh.flake = "/home/spliterash/config";
+  programs.nh.flake = "/home/${username}/config";
 
   programs.kdeconnect.enable = true;
 

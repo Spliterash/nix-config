@@ -1,7 +1,4 @@
-{ lib, config,pkgs, ... }:
-let
-  defaultCloneDir = "/home/spliterash/projects";
-in
+{ config, pkgs, ... }:
 {
   home.packages = with pkgs; [
     sourcegit
