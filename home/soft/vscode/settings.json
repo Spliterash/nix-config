@@ -8,12 +8,9 @@
   "security.workspace.trust.enabled": false,
   "workbench.iconTheme": "vscode-icons",
   "explorer.confirmDragAndDrop": false,
-  "files.autoSave": "afterDelay",
   "claudeCode.preferredLocation": "panel",
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   "chat.disableAIFeatures": true,
-  "redhat.telemetry.enabled": true,
+  "redhat.telemetry.enabled": false,
   "window.openFoldersInNewWindow": "on",
   //! linux fixes
   "window.dialogStyle": "custom",
@@ -22,4 +19,12 @@
   "update.mode": "manual",
   "diffEditor.ignoreTrimWhitespace": false,
   // "terminal.external.linuxExec": "wezterm",
+  "[yaml]": {
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+  },
+  "[dockercompose]": {
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+  },
 }
