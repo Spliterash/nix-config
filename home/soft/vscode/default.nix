@@ -12,6 +12,9 @@
 #
 # Детальный конфиг nixd для самого этого репо — отдельно, в ./.vscode/settings.json.
 { pkgs, config, ... }:
+let
+  vscodeConfigDir = "${config.home.homeDirectory}/config/home/soft/vscode";
+in
 {
   programs.vscode = {
     enable = true;
@@ -23,7 +26,7 @@
   };
 
   xdg.configFile."Code/User/settings.json".source =
-    config.lib.file.mkOutOfStoreSymlink "${toString ./.}/settings.json";
+    config.lib.file.mkOutOfStoreSymlink "${vscodeConfigDir}/settings.json";
   xdg.configFile."Code/User/keybindings.json".source =
-    config.lib.file.mkOutOfStoreSymlink "${toString ./.}/keybindings.json";
+    config.lib.file.mkOutOfStoreSymlink "${vscodeConfigDir}/keybindings.json";
 }

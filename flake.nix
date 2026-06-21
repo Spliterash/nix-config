@@ -29,6 +29,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     impermanence.url = "github:nix-community/impermanence";
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -69,7 +73,10 @@
           ./modules/docker.nix
           ./modules/btop.nix
           ./modules/python.nix
-
+          # Comma
+          inputs.nix-index-database.nixosModules.default
+          { programs.nix-index-database.comma.enable = true; }
+          # HomeManaaer
           (
             { specialArgs, ... }:
             {

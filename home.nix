@@ -3,25 +3,26 @@
   home.stateVersion = "26.05";
   xdg.enable = true;
   imports = [
+    # Методы
     ./home/mutable-json.nix
-    ./home/soft/furryfox/furryfox.nix
-    ./home/soft/vesktop.nix
-    ./home/soft/jetbrains/idea.nix
-    ./home/soft/freesm.nix
-    ./home/soft/vscode/vscode.nix
-    ./home/soft/wezterm/wezterm.nix
-
-    ./home/git.nix
-    ./home/soft/sourcegit.nix
-    ./home/plasma/plasma.nix
-    ./home/sound/sound.nix
-
+    # База
     ./home/shell/aliases.nix
     ./home/shell/zsh.nix
     ./home/shell/fzf.nix
 
+    ./home/git.nix
+    ./home/plasma
+    ./home/sound
+    # Проги
+    ./home/soft/furryfox
+    ./home/soft/sourcegit.nix
+    ./home/soft/vesktop.nix
+    ./home/soft/jetbrains/idea.nix
+    ./home/soft/freesm.nix
+    ./home/soft/vscode
+    ./home/soft/wezterm
     ./home/soft/bruno.nix
-
     ./home/soft/media.nix
+    ./home/soft/yazi.nix
   ];
 }
