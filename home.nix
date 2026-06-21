@@ -1,6 +1,7 @@
 { inputs, pkgs, ... }:
 {
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
+  xdg.enable = true;
   imports = [
     ./home/mutable-json.nix
     ./home/soft/furryfox/furryfox.nix
