@@ -14,6 +14,8 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ./disk-config.nix
+    ./impermanence.nix
   ];
 
   # Хеш коммита конфига в генерации (столбец Configuration Revision в
@@ -71,7 +73,11 @@
     '';
 
   # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_6_12;
+  boot.kernelPackages = pkgs.linuxPackages_6_18;
+  services.zfs.autoScrub.enable = true;
+  services.zfs.autoSnapshot.enable = true; # ! да, я включил снапшоты, саси (они бесплатные)
+  #? ZFS requires networking.hostId to be set
+  networking.hostId = "97199ad0";
 
   networking.hostName = "main"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.

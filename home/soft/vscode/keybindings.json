@@ -1,0 +1,33 @@
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "ctrl+tab",
+        "command": "workbench.action.terminal.focusNext",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+shift+tab",
+        "command": "workbench.action.terminal.focusPrevious",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+c",
+        "command": "workbench.action.terminal.copySelection",
+        "when": "terminalFocus && terminalHasBeenCreated && terminalTextSelected || terminalFocus && terminalProcessSupported && terminalTextSelected"
+    },
+    {
+        "key": "ctrl+v",
+        "command": "workbench.action.terminal.paste",
+        "when": "terminalFocus && terminalHasBeenCreated || terminalFocus && terminalProcessSupported"
+    },
+    {
+        "key": "ctrl+[Backquote]",
+        "command": "workbench.action.terminal.toggleTerminal",
+        "when": "terminal.active"
+    },
+    {
+        "key": "ctrl+`",
+        "command": "-workbench.action.terminal.toggleTerminal",
+        "when": "terminal.active"
+    }
+]

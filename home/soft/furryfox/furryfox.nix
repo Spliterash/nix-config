@@ -32,10 +32,6 @@ in
   # programs.firefoxpwa.enable = true;
   programs.firefox = {
     enable = true;
-    # Оставляем легаси-путь профилей (~/.mozilla/firefox): он совпадает с дефолтом
-    # при home.stateVersion < "26.05". Явно задаём, чтобы убрать eval-варнинг о
-    # смене дефолта на XDG-путь. Менять на XDG → сперва перенести каталог профиля.
-    configPath = ".mozilla/firefox";
     nativeMessagingHosts = with pkgs; [
       kdePackages.plasma-browser-integration
       #? firefox pwa, if I ever need it

@@ -1,8 +1,9 @@
-{ pkgs, username, ... }: {
-  environment.systemPackages = with pkgs; [
-    docker
-  ];
-  virtualisation.docker.enable = true;
+{ username, ... }: {
+  virtualisation.docker = {
+    enable = true;
+    storageDriver = "zfs";
+  };
+
   users.users.${username} = {
     extraGroups = [
       "docker"

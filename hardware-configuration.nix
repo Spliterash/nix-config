@@ -26,20 +26,8 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-uuid/0543eb91-0658-46ec-a72f-ab309da09bc5";
-    fsType = "btrfs";
-    options = [ "subvol=@" ];
-  };
-
-  fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/0543eb91-0658-46ec-a72f-ab309da09bc5";
-    fsType = "btrfs";
-    options = [ "subvol=@home" ];
-  };
-
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/C286-B51D";
+    device = "/dev/disk/by-uuid/6BF8-C011";
     fsType = "vfat";
     options = [
       "fmask=0077"

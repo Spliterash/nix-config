@@ -23,5 +23,7 @@
   };
 
   xdg.configFile."Code/User/settings.json".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/config/home/soft/vscode/settings.json";
+    config.lib.file.mkOutOfStoreSymlink "${toString ./.}/settings.json";
+  xdg.configFile."Code/User/keybindings.json".source =
+    config.lib.file.mkOutOfStoreSymlink "${toString ./.}/keybindings.json";
 }
