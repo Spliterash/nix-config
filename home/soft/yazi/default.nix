@@ -1,8 +1,10 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   programs.yazi = {
     enable = true;
     settings = {
       mgr.show_hidden = true;
+      mgr.linemode = "size_mtime";
       plugin.prepend_previewers = [
         {
           url = "*.csv";
@@ -45,27 +47,17 @@
             run = "plugin --sync smart-enter";
             desc = "Enter the child directory, or open the file";
           }
+          {
+            on = [
+              "m"
+              "a"
+            ];
+            run = "linemode size_mtime";
+            desc = "Show size and modification time";
+          }
         ];
       };
     };
-    #? https://github.com/sxyazi/yazi/blob/157156b5b8f36db15b2ba425c7d15589039a9e1e/yazi-plugin/preset/components/linemode.lua#L25
-    initLua = /* lua */ ''
-      function strip_date_year(time_to_format)
-        local time = math.floor(time_to_format or 0)
-        if time == 0 then
-          return ""
-        elseif os.date("%Y", time) == os.date("%Y") then
-          return os.date("%H:%M %d.%m", time)
-        else
-          return os.date("%d.%m.%Y", time)
-        end
-      end
-      function Linemode:btime()
-        return strip_date_year(self._file.cha.btime)
-      end
-      function Linemode:mtime()
-        return strip_date_year(self._file.cha.mtime)
-      end
-    '';
+    initLua = ./init.lua;
   };
 }

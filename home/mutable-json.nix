@@ -16,29 +16,41 @@
 #   mutableJson."${config.home.homeDirectory}/.sourcegit/preference.json".set = [
 #     { path = [ "Workspaces" 0 "DefaultCloneDir" ]; value = "/home/spliterash/projects"; }
 #   ];
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   cfg = config.mutableJson;
   jsonFormat = pkgs.formats.json { };
 
   # jq-фильтр для одного точечного присваивания: объект сливается, скаляр заменяет.
-  setFilter = i: _:
-    let v = "$v${toString i}"; p = "$p${toString i}"; in
+  setFilter =
+    i: _:
+    let
+      v = "$v${toString i}";
+      p = "$p${toString i}";
+    in
     "\n  | setpath(${p}; ((getpath(${p}) // null) as $cur"
     + " | if ($cur|type) == \"object\" and (${v}|type) == \"object\""
     + " then ($cur * ${v}) else ${v} end))";
 
-  setArg = i: e:
+  setArg =
+    i: e:
     "--argjson p${toString i} ${lib.escapeShellArg (builtins.toJSON e.path)} "
     + "--argjson v${toString i} ${lib.escapeShellArg (builtins.toJSON e.value)}";
 
-  mergeOne = path: opts:
+  mergeOne =
+    path: opts:
     let
       managed = jsonFormat.generate "mutable-json.json" opts.settings;
       p = lib.escapeShellArg path;
       args = lib.concatStringsSep " " (lib.imap0 setArg opts.set);
       filter = "(. * $managed[0])" + lib.concatStrings (lib.imap0 setFilter opts.set);
-    in ''
+    in
+    ''
       mkdir -p ${lib.escapeShellArg (builtins.dirOf path)}
       [ -e ${p} ] || echo '{}' > ${p}
       ${pkgs.jq}/bin/jq --slurpfile managed ${managed} ${args} '${filter}' ${p} > ${p}.hm-tmp
@@ -50,7 +62,11 @@ let
     options = {
       path = lib.mkOption {
         type = with lib.types; listOf (either str int);
-        example = [ "Workspaces" 0 "DefaultCloneDir" ];
+        example = [
+          "Workspaces"
+          0
+          "DefaultCloneDir"
+        ];
         description = "jq-путь до значения (строки — ключи, числа — индексы массивов).";
       };
       value = lib.mkOption {
@@ -83,7 +99,8 @@ in
   };
 
   config = lib.mkIf (cfg != { }) {
-    home.activation.mutableJson = lib.hm.dag.entryAfter [ "writeBoundary" ]
-      (lib.concatStringsSep "\n" (lib.mapAttrsToList mergeOne cfg));
+    home.activation.mutableJson = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      lib.concatStringsSep "\n" (lib.mapAttrsToList mergeOne cfg)
+    );
   };
 }

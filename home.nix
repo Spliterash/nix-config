@@ -23,6 +23,6 @@
     ./home/soft/wezterm
     ./home/soft/bruno.nix
     ./home/soft/media.nix
-    ./home/soft/yazi.nix
+    ./home/soft/yazi
   ];
 }

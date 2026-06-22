@@ -8,7 +8,7 @@
   "security.workspace.trust.enabled": false,
   "workbench.iconTheme": "vscode-icons",
   "explorer.confirmDragAndDrop": false,
-  "claudeCode.preferredLocation": "sidebar",
+  "claudeCode.preferredLocation": "panel",
   "chat.disableAIFeatures": true,
   "redhat.telemetry.enabled": false,
   "window.openFoldersInNewWindow": "on",
