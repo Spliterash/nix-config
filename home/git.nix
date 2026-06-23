@@ -5,7 +5,7 @@
     lfs.enable = true;
     settings = {
       user.name = "Spliterash";
-      user.email = "me@spliterash";
+      user.email = "me@spliterash.ru";
 
       core.fileMode = false;
       core.autocrlf = "input";
