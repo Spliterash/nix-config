@@ -1,21 +1,30 @@
-{ pkgs, ... }:
+{
+  config,
+  flakePath,
+  pkgs,
+  ...
+}:
 {
   home.packages = with pkgs; [
     zsh-completions
   ];
-
+  xdg.configFile."shell/".source =
+    config.lib.file.mkOutOfStoreSymlink "${flakePath}/home/shell/scripts";
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     autocd = true;
     history.size = 100000;
-    # fzf-tab подключается отдельно в ./fzf.nix (programs.zsh.plugins).
-    # Home Manager грузит плагины (order 900) после compinit (570) и до
-    # syntax-highlighting (1200) — именно этот порядок и нужен fzf-tab.
+
     initContent = ''
       #! add from home config
       bindkey -e
+
+      #! Source interactive shell helpers after compinit so compdef is available.
+      for file in "''${XDG_CONFIG_HOME:-$HOME/.config}"/shell/*.sh(N); do
+        source "$file"
+      done
     ''
     + builtins.readFile ./.zshrc;
   };
