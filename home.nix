@@ -22,6 +22,8 @@
     ./home/soft/vscode
     ./home/soft/wezterm
     ./home/soft/bruno.nix
+
+    # ./home/soft/ollama.nix
     ./home/soft/media.nix
     ./home/soft/yazi
   ];

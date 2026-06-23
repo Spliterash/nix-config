@@ -67,7 +67,7 @@
           ./modules/sunshine.nix
           ./modules/hardware/xbox.nix
           ./modules/gaming/steam.nix
-          ./modules/powersaving.nix
+          # ./modules/powersaving.nix
           ./modules/vm.nix
           ./modules/nodejs.nix
           ./modules/docker.nix

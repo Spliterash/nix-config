@@ -59,6 +59,7 @@
           "docker" = {
             type = "zfs_fs";
             mountpoint = "/var/lib/docker";
+            options."com.sun:auto-snapshot" = "false";
           };
           "shit" = {
             type = "zfs_fs";
