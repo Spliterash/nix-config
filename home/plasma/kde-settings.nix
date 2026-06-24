@@ -1,6 +1,5 @@
 {
-  lib,
-  config,
+  pkgs,
   inputs,
   ...
 }:
@@ -8,6 +7,9 @@
 {
   imports = [
     inputs.plasma-manager.homeModules.plasma-manager
+  ];
+  home.packages = [
+    pkgs.plasmusic-toolbar
   ];
 
   programs.plasma = {
