@@ -34,4 +34,5 @@
   "search.defaultViewMode": "tree",
   "gitlens.views.commits.files.layout": "tree",
   "gitlens.views.commitDetails.files.layout": "tree",
+  "files.enableTrash": false,
 }

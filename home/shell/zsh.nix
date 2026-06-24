@@ -7,6 +7,7 @@
 {
   home.packages = with pkgs; [
     zsh-completions
+    bat
   ];
   xdg.configFile."shell/".source =
     config.lib.file.mkOutOfStoreSymlink "${flakePath}/home/shell/scripts";
