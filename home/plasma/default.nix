@@ -195,6 +195,18 @@ in
       "services/org.kde.plasma-systemmonitor.desktop"."_launch" = [
         "Ctrl+Shift+Esc"
       ];
+      "services/org.kde.spectacle.desktop" = {
+        "ActiveWindowScreenShot" = "Ctrl+Print";
+        "CurrentMonitorScreenShot" = "";
+        "FullScreenScreenShot" = "none";
+        "OpenWithoutScreenshot" = "";
+        "RecordRegion" = "Shift+Print";
+        "RecordScreen" = "none";
+        "RecordWindow" = "none";
+        "RectangularRegionScreenShot" = "none";
+        "WindowUnderCursorScreenShot" = "none";
+        "_launch" = "Print";
+      };
     };
 
     configFile = {
