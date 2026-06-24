@@ -14,7 +14,7 @@
   imports = [
     inputs.disko.nixosModules.disko
   ];
-
+  boot.zfs.forceImportRoot = false;
   disko.devices = {
     disk = {
       nvme = {
