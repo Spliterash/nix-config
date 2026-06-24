@@ -141,3 +141,28 @@ dirty() {
   [ -n "$selected_path" ] || selected_path=/
   cd "$selected_path" || return 1
 }
+
+# Быстрый apply только Home Manager из NixOS-конфига.
+# hms [flake_path=~/config] [nixos_config=main] [hm_user=$USER]
+hms() {
+  local flake="${1:-$HOME/config}"
+  local nixos_config="${2:-main}"
+  local hm_user="${3:-$USER}"
+  local attr="nixosConfigurations.${nixos_config}.config.home-manager.users.${hm_user}.home.activationPackage"
+  local generation
+
+  echo "Building Home Manager generation: ${flake}#${attr}"
+  if ! generation=$(nix build --no-link --print-out-paths "${flake}#${attr}"); then
+    command -v notify-send >/dev/null 2>&1 && notify-send "Home Manager build failed"
+    return 1
+  fi
+
+  echo "Activating: ${generation}"
+  if ! "$generation/activate"; then
+    command -v notify-send >/dev/null 2>&1 && notify-send "Home Manager activation failed"
+    return 1
+  fi
+
+  command -v notify-send >/dev/null 2>&1 && notify-send "Home Manager activation success"
+  exec "$SHELL"
+}
