@@ -18,3 +18,13 @@ ffmp4() {
            -movflags +faststart \
            "$output"
 }
+# Скачивание аудио с обложкой и конвертация в опус
+alias yta='yt-dlp \
+--embed-thumbnail \
+--embed-metadata \
+--embed-chapters \
+--extract-audio \
+--audio-format opus \
+--audio-quality 10 \
+--trim-filenames 248 \
+--output "%(artist,channel,album_artist,uploader)s/%(album)s/%(track,title,track_id)s - [%(id)s].%(ext)s"'
