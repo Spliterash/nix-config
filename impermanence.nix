@@ -60,6 +60,7 @@ in
         #? apps
         ".android"
         ".claude"
+        ".codex"
         ".thunderbird"
         ".vscode"
         ".vscode-shared" # ? recent and trust folders

@@ -201,6 +201,7 @@
     ayugram-desktop
     nixd
     sshfs
+    libva-utils
     claude-code
     codex
     nixfmt
