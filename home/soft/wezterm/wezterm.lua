@@ -28,11 +28,12 @@ return {
         top = 0,
         bottom = 0,
     },
+    window_close_confirmation = 'NeverPrompt';
 
     --? https://wezterm.org/config/default-keys.html
     keys = {
         --? https://wezterm.org/config/lua/keyassignment/CloseCurrentTab.html
-        { key = 'q',   mods = 'CTRL',       action = act.CloseCurrentTab { confirm = false } },
+        { key = 'w',   mods = 'CTRL',       action = act.CloseCurrentTab { confirm = false } },
         --! it slightly differs from usual MRU
         --? https://github.com/wezterm/wezterm/issues/4518
         { key = "Tab", mods = 'CTRL',       action = "ActivateLastTab" },
