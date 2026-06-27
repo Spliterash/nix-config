@@ -65,6 +65,7 @@ in
         ".vscode"
         ".vscode-shared" # ? recent and trust folders
         ".sourcegit"
+        ".java"
 
         #? games
         ".steam"
