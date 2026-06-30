@@ -16,6 +16,7 @@
     ./hardware-configuration.nix
     ./disk-config.nix
     ./impermanence.nix
+    ./modules/locale.nix
   ];
 
   # Хеш коммита конфига в генерации (столбец Configuration Revision в
@@ -107,21 +108,6 @@
     "0.ru.pool.ntp.org"
     "1.ru.pool.ntp.org"
   ];
-
-  # Select internationalisation properties.
-  i18n.defaultLocale = "ru_RU.UTF-8";
-
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "ru_RU.UTF-8";
-    LC_IDENTIFICATION = "ru_RU.UTF-8";
-    LC_MEASUREMENT = "ru_RU.UTF-8";
-    LC_MONETARY = "ru_RU.UTF-8";
-    LC_NAME = "ru_RU.UTF-8";
-    LC_NUMERIC = "ru_RU.UTF-8";
-    LC_PAPER = "ru_RU.UTF-8";
-    LC_TELEPHONE = "ru_RU.UTF-8";
-    LC_TIME = "ru_RU.UTF-8";
-  };
 
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
