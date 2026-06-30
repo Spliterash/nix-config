@@ -76,6 +76,7 @@
           ./modules/docker.nix
           ./modules/btop.nix
           ./modules/python.nix
+          ./modules/throne.nix
           # Comma
           inputs.nix-index-database.nixosModules.default
           { programs.nix-index-database.comma.enable = true; }

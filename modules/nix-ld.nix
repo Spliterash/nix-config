@@ -29,6 +29,8 @@
         libxrandr
         libxrender
         libxtst
+        # Чтобы работала штука для физике в майнкрафтееееее
+        stdenv.cc.cc.lib
 
         at-spi2-atk
         alsa-lib
