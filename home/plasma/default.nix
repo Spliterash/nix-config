@@ -50,8 +50,8 @@ in
       turnOffDisplay.idleTimeout = "never";
       dimDisplay.enable = false;
       autoSuspend = {
-        action = "sleep";
-        idleTimeout = 3600;
+        action = "shutDown";
+        idleTimeout = 10800;
       };
     };
     #! broken logout session.sessionRestore.restoreOpenApplicationsOnLogin = "whenSessionWasManuallySaved";
