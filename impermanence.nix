@@ -60,6 +60,7 @@ in
         #? apps
         ".android"
         ".claude"
+        ".claude-mem"
         ".codex"
         ".thunderbird"
         ".vscode"
