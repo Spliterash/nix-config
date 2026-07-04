@@ -2,6 +2,12 @@
 #? https://wiki.nixos.org/wiki/Nix-ld
 #? https://unix.stackexchange.com/a/522823
 {
+  # Фигня чтобы работало в жабагадюке (java+python)
+  environment.sessionVariables.LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+    pkgs.stdenv.cc.cc.lib
+    pkgs.zlib
+  ];
+
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries =
     with pkgs;
@@ -42,6 +48,7 @@
         glib
         gtk3
         pango
+        zlib # libz.so.1
       ]
       (steam-run.args.multiPkgs pkgs)
     ];
