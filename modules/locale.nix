@@ -14,7 +14,7 @@
       #! LC_MESSAGES,LC_NAME is skipped as useless
       LC_MONETARY = "en_US.UTF-8"; # ? , as thousand separator
       LC_NUMERIC = "en_US.UTF-8"; # ? , as thousand separator
-      LC_TIME = "en_SE.UTF-8"; # ? ISO time with icu support
+      LC_TIME = "ru_RU.UTF-8";
       #? я русский
       LC_ADDRESS = "ru_RU.UTF-8";
       LC_TELEPHONE = "ru_RU.UTF-8";
