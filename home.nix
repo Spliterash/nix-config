@@ -27,4 +27,8 @@
     ./home/soft/media.nix
     ./home/soft/yazi
   ];
+
+  home.packages = [
+    (pkgs.callPackage ./packages/sniffcraft.nix { })
+  ];
 }
