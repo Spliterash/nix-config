@@ -116,7 +116,7 @@
   services.displayManager.sddm.enable = true;
   services.displayManager.sddm.settings.General.Numlock = "on";
   services.desktopManager.plasma6.enable = true;
-
+  security.pam.services.sddm.kwallet.enable = false;
   # Автологин без экрана входа. SDDM сам пропускает выбор юзера и сразу грузит
   # единственную сессию (Plasma 6). В VM свой autoLogin внутри vmVariant
   # (modules/vm.nix) — он этот блок не отменяет, оба про одного юзера.
