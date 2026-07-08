@@ -5,6 +5,7 @@
   autoPatchelfHook,
   copyDesktopItems,
   makeDesktopItem,
+  makeWrapper,
   libGL,
   xorg,
   wayland,
@@ -25,6 +26,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     autoPatchelfHook
     copyDesktopItems
+    makeWrapper
   ];
 
   buildInputs = [
@@ -59,7 +61,15 @@ stdenv.mkDerivation {
 
   installPhase = ''
     runHook preInstall
-    install -Dm755 $src $out/bin/sniffcraft
+
+    install -Dm755 $src $out/libexec/sniffcraft
+
+    # SniffCraft пишет conf.json, логи и replay-файлы в текущую рабочую
+    # директорию и не умеет её переопределять — поэтому обёртка загоняет
+    # всё в одну папку внутри $XDG_CONFIG_HOME вместо корня $HOME.
+    makeWrapper $out/libexec/sniffcraft $out/bin/sniffcraft \
+      --run 'dir="''${XDG_CONFIG_HOME:-$HOME/.config}/sniffcraft"; mkdir -p "$dir"; cd "$dir"; set -- "$dir/conf.json" "$@"'
+
     runHook postInstall
   '';
 
