@@ -29,7 +29,8 @@
     ./home/soft/yazi
   ];
 
-  home.packages = [
-    (pkgs.callPackage ./packages/sniffcraft.nix { })
+  home.packages = with pkgs; [
+    (callPackage ./packages/sniffcraft.nix { })
+    atlas
   ];
 }

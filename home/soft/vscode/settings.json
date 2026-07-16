@@ -29,7 +29,6 @@
   },
   "workbench.sideBar.location": "right",
   "files.autoSave": "afterDelay",
-  "workbench.colorTheme": "Shades of Purple (Super Dark)",
   "scm.defaultViewMode": "tree",
   "search.defaultViewMode": "tree",
   "gitlens.views.commits.files.layout": "tree",

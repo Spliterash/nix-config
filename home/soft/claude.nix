@@ -4,6 +4,7 @@ let
 in
 {
   home.packages = [
+    pkgs.graphify
     llm.claude-code
     llm.codex
   ];
