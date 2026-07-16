@@ -29,6 +29,10 @@
     ./home/soft/yazi
   ];
 
+  # Python UV path
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
   home.packages = with pkgs; [
     (callPackage ./packages/sniffcraft.nix { })
     atlas
