@@ -45,6 +45,35 @@
       settings = import ./settings.nix;
       inherit (settings) username;
       pkgs = nixpkgs.legacyPackages.${system};
+
+      mkHost =
+        hostName:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit inputs system;
+          }
+          // settings;
+          modules = [
+            ./hosts/${hostName}/modules.nix
+            ./nix.nix
+            # Comma
+            inputs.nix-index-database.nixosModules.default
+            { programs.nix-index-database.comma.enable = true; }
+            # HomeManaaer
+            (
+              { specialArgs, ... }:
+              {
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.extraSpecialArgs = specialArgs;
+                home-manager.users.${username} = ./hosts/${hostName}/home.nix;
+                home-manager.backupFileExtension = "backup";
+              }
+            )
+            inputs.home-manager.nixosModules.home-manager
+          ];
+        };
     in
     {
       #? Приколюха чтобы сурсы флейков складывать в папку инпут, мб не нужно, потом уберу
@@ -55,46 +84,8 @@
         }) (builtins.removeAttrs inputs [ "self" ])
       );
 
-      nixosConfigurations.main = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          inherit inputs system;
-        }
-        // settings;
-        modules = [
-          ./configuration.nix
-          ./nix.nix
-          ./modules/java.nix
-          ./modules/nix-ld.nix
-          ./modules/wine.nix
-          ./modules/sunshine.nix
-          ./modules/hardware/xbox.nix
-          ./modules/gaming/steam.nix
-          # ./modules/powersaving.nix
-          ./modules/vm.nix
-          ./modules/nodejs.nix
-          ./modules/docker.nix
-          ./modules/btop.nix
-          ./modules/python.nix
-          ./modules/throne.nix
-          # Comma
-          inputs.nix-index-database.nixosModules.default
-          { programs.nix-index-database.comma.enable = true; }
-          # HomeManaaer
-          (
-            { specialArgs, ... }:
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = specialArgs;
-              home-manager.users.${username} = ./home.nix;
-              home-manager.backupFileExtension = "backup";
-            }
-          )
-          inputs.home-manager.nixosModules.home-manager
-        ];
-
-      };
+      nixosConfigurations.main = mkHost "main";
+      nixosConfigurations.laptop = mkHost "laptop";
 
       #? Залупа чтобы работал лангуаге сервер в хом менеджере
       homeConfigurations.nixd = inputs.home-manager.lib.homeManagerConfiguration {
@@ -104,7 +95,7 @@
         }
         // settings;
         modules = [
-          ./home.nix
+          ./hosts/main/home.nix
           # home.nix не задаёт username/homeDirectory (в реальной системе их ставит
           # NixOS-интеграция home-manager). Для standalone-конфига они обязательны,
           # но на .options не влияют — поэтому значения фейковые.

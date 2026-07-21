@@ -1,15 +1,5 @@
 { inputs, ... }:
-#? ZFS pool was created manually on nvme0n1p4:
-#?
-#? echo -n "PASSPHRASE" > /tmp/secret.key && chmod 600 /tmp/secret.key
-#? # remove -R /mnt
-#? {
-#?   grep "zpool create" $(nix build .#nixosConfigurations.main.config.system.build.diskoScript --print-out-paths) --after-context=4
-#?   echo /dev/disk/by-id/nvme-KINGSTON_SFYRD2000G_50026B7382C41D9A-part2
-#? }
-#?
-#? grep "zfs create" $(nix build .#nixosConfigurations.main.config.system.build.diskoScript --print-out-paths) --after-context=2
-#? zfs snapshot zroot/root@blank
+
 {
   imports = [
     inputs.disko.nixosModules.disko
@@ -19,7 +9,7 @@
   disko.devices = {
     disk = {
       nvme = {
-        device = "/dev/disk/by-id/nvme-KINGSTON_SFYRD2000G_50026B7382C41D9A";
+        device = "/dev/disk/by-id/REPLACE_ME_AT_INSTALL";
         destroy = false;
         content = {
           type = "gpt";
@@ -38,6 +28,10 @@
           atime = "off";
           acltype = "posixacl";
           xattr = "sa";
+
+          encryption = "on";
+          keyformat = "passphrase";
+          keylocation = "prompt";
         };
 
         datasets = {
