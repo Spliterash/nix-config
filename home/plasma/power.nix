@@ -1,4 +1,6 @@
 { ... }:
+#? Только main — импортится напрямую из hosts/main/home.nix, не через
+#? home/plasma/default.nix. На ноуте вместо этого power-laptop.nix.
 {
   programs.plasma = {
     # Чёрная «заставка» по простою вместо отдельного скринсейвера (в Plasma 6 его убрали).

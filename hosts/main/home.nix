@@ -16,5 +16,6 @@
     ../../home/soft/media.nix
 
     ../../home/hardware/mouse.nix
+    ../../home/plasma/power.nix
   ];
 }

@@ -4,6 +4,7 @@
 
   imports = [
     ../../home/common.nix
+    ../../home/plasma/power-laptop.nix
 
     # Отключено по умолчанию — включить при необходимости на ноуте:
     # ../../home/soft/furryfox
