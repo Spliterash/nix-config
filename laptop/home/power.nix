@@ -1,7 +1,7 @@
 { ... }:
-#? Только laptop — импортится напрямую из hosts/laptop/home.nix, не через
-#? home/plasma/default.nix. На main вместо этого power.nix (чёрная заливка,
-#? монитор никогда не гасить).
+#? Только laptop — импортится напрямую из laptop/home/default.nix, не через
+#? common/home/plasma/default.nix. На main вместо этого main/home/power.nix
+#? (чёрная заливка, монитор никогда не гасить).
 {
   programs.plasma.powerdevil = {
     battery = {

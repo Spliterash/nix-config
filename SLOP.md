@@ -1,15 +1,23 @@
 # Установка
 
-Флейк на несколько хостов. Каждый хост живёт в `hosts/<имя>/` и собирается как
-`nixosConfigurations.<имя>` (сейчас есть `main` и `laptop`).
+Флейк на несколько хостов. Каждый хост живёт в `<имя>/` (папка верхнего уровня)
+и собирается как `nixosConfigurations.<имя>` (сейчас есть `main` и `laptop`).
+
+Структура host-центричная: всё общее — в `common/`, всё host-only — в папке
+своего хоста. Внутри каждой папки разделение `system/` (NixOS) и `home/`
+(home-manager).
 
 ```
-hosts/
-  common.nix        — общее для всех хостов (пакеты, юзер, общие модули)
-  main/              — десктоп (AMD GPU, установлен и работает)
-  laptop/            — ноут (NVIDIA, ещё не установлен — см. ниже)
-modules/             — системные NixOS-модули
-home/                — home-manager конфиг (общий + per-soft файлы)
+common/              — общее для всех хостов
+  system/            — системные NixOS-модули (вкл. nix.nix, impermanence.nix)
+  home/              — home-manager конфиг (общий)
+  packages/          — кастомные пакеты (sniffcraft, locales-iso)
+main/                — десктоп (AMD GPU, установлен и работает)
+  system/            — точка входа (default.nix) + hardware/disk/gpu, powersaving
+  home/              — home-manager: софт этого хоста
+laptop/              — ноут (NVIDIA)
+  system/            — точка входа (default.nix) + hardware/disk/gpu
+  home/              — home-manager этого хоста
 ```
 
 Разметка диска (GPT, EFI-раздел, раздел под ZFS) — единственный ручной шаг:
@@ -20,7 +28,7 @@ home/                — home-manager конфиг (общий + per-soft фай
 не нужно.
 
 Исключение — `laptop`: он ставился на **весь диск** (NixOS-only, без Windows),
-поэтому его `disk-config.nix` описывает полный layout (ESP 2 ГБ + раздел под
+поэтому его `laptop/system/disk-config.nix` описывает полный layout (ESP 2 ГБ + раздел под
 ZFS) и disko размечает *и* монтирует ESP сам — ручная разметка (§2) и ручное
 монтирование ESP (§4) для него не нужны. Ставился он удалённо по сети с `main`
 через `nixos-anywhere` — см. отдельный раздел ниже.
@@ -28,15 +36,15 @@ ZFS) и disko размечает *и* монтирует ESP сам — ручн
 ## 0. Что нужно знать заранее
 
 - Каждый хост — отдельный `networking.hostId` (обязателен для ZFS) и
-  `networking.hostName`. Уже прописаны в `hosts/<имя>/modules.nix`.
+  `networking.hostName`. Уже прописаны в `<имя>/system/default.nix`.
 - Имперманенс: корень (`/`) откатывается к чистому ZFS-снапшоту
-  `zroot/root@blank` при каждой загрузке (см. `impermanence.nix`). Всё, что
+  `zroot/root@blank` при каждой загрузке (см. `common/system/impermanence.nix`). Всё, что
   должно пережить перезагрузку, лежит в `/persistent` (и `/shit` — для
   кэшей типа `.cache`/`.gradle`/`.npm`, которые не обязательно снапшотить).
   Снапшот создаётся автоматически при создании пула (`postCreateHook` в
-  `disk-config.nix`) — руками ничего делать не нужно.
+  `<имя>/system/disk-config.nix`) — руками ничего делать не нужно.
 - Шифрование пула (native ZFS encryption, `keylocation=prompt`) — только у
-  `laptop`. `main` без шифрования. Смотри сам `disk-config.nix` нужного
+  `laptop`. `main` без шифрования. Смотри сам `<имя>/system/disk-config.nix` нужного
   хоста, а не эту инструкцию, если не уверен. Файла с ключом нигде нет —
   пароль спрашивается интерактивно в терминале при создании пула (пункт 4)
   и на каждой загрузке.
@@ -70,17 +78,17 @@ ls -la /dev/disk/by-id/
 
 Клонируй этот репозиторий (или скопируй флешкой) куда угодно, например
 `/tmp/config` — финальное место `/home/<юзер>/config` появится само после
-установки (`programs.nh.flake` в `hosts/common.nix` на это рассчитан).
+установки (`programs.nh.flake` в `common/system/default.nix` на это рассчитан).
 
-Для **нового** хоста (по образцу `hosts/laptop/`, если ставишь именно
+Для **нового** хоста (по образцу `laptop/`, если ставишь именно
 ноут — эти правки уже сделаны, просто проверь):
 
-- `hosts/<имя>/disk-config.nix` — замени `REPLACE_ME_AT_INSTALL` на реальный
+- `<имя>/system/disk-config.nix` — замени `REPLACE_ME_AT_INSTALL` на реальный
   `/dev/disk/by-id/...` раздела под ZFS (без `-partN`, просто путь родителя,
-  как в `hosts/main/disk-config.nix`, либо сразу с `-partN`, если раздел уже
+  как в `main/system/disk-config.nix`, либо сразу с `-partN`, если раздел уже
   существует — смотри на `content.type = "gpt"` в файле, определяет, ждёт
   ли disko целый диск или готовый раздел).
-- `networking.hostId` в `hosts/<имя>/modules.nix` — уже задан уникально,
+- `networking.hostId` в `<имя>/system/default.nix` — уже задан уникально,
   трогать не нужно, только не копируй один и тот же id на два хоста.
 
 ## 4. Диск: пул, датасеты, монтирование — одной командой
@@ -115,7 +123,7 @@ nixos-generate-config --no-filesystems --root /mnt
 Перенеси нужные секции (`boot.initrd.availableKernelModules`,
 `boot.initrd.kernelModules`, `boot.kernelModules`, `hardware.cpu.*`,
 `fileSystems."/boot"` с реальным UUID ESP) в
-`hosts/<имя>/hardware-configuration.nix`, заменив там заглушку.
+`<имя>/system/hardware-configuration.nix`, заменив там заглушку.
 
 Дальше:
 
@@ -124,13 +132,13 @@ cd /path/to/config   # где лежит flake.nix
 sudo nixos-install --flake .#<имя> --root /mnt
 ```
 
-Пароль пользователя уже задан в `hosts/common.nix` (`hashedPassword`) — новый
+Пароль пользователя уже задан в `common/system/default.nix` (`hashedPassword`) — новый
 вводить не нужно, если не хочешь сменить.
 
 ## 6. Первая загрузка
 
 Перезагрузись, убери флешку. Автологин в Plasma включён
-(`modules/desktop-environment.nix`) — сразу должен появиться рабочий стол.
+(`common/system/desktop-environment.nix`) — сразу должен появиться рабочий стол.
 
 Дальше конфиг живёт по пути из `programs.nh.flake`
 (`/home/<юзер>/config`) — склонируй репозиторий именно туда, чтобы работали
@@ -142,7 +150,7 @@ sudo nixos-install --flake .#<имя> --root /mnt
 `main`, по LAN на ноут копируется только результат (closure). Ноут при этом
 загружен с NixOS live-ISO с доступом по SSH (root, пароль установщика).
 
-Важно: `hosts/laptop/disk-config.nix` описывает **весь диск** — ESP (2 ГБ,
+Важно: `laptop/system/disk-config.nix` описывает **весь диск** — ESP (2 ГБ,
 `/boot`) и раздел под ZFS создаёт сам disko. Ручная разметка и монтирование
 ESP не нужны.
 
@@ -150,7 +158,7 @@ ESP не нужны.
    ```bash
    ssh-copy-id root@<ip>
    ssh root@<ip> 'nixos-generate-config --no-filesystems --show-hardware-config' \
-     > hosts/laptop/hardware-configuration.nix
+     > laptop/system/hardware-configuration.nix
    ```
 2. Собери diskoScript на `main` и скопируй его closure на ноут:
    ```bash
@@ -187,7 +195,7 @@ ESP не нужны.
   Проверить: `zpool import` должен показывать пул как импортируемый по имени
   без предупреждений о hostid и без `-f`.
 - **`Failed to install bootloader`.** `extraInstallCommands` в
-  `modules/boot-generations.nix` вызывает `git log` по `programs.nh.flake` —
+  `common/system/boot-generations.nix` вызывает `git log` по `programs.nh.flake` —
   в свежей системе репозитория там ещё нет, git падает, и под `set -e` это
   роняло весь установщик загрузчика (вывод git скрыт `2>/dev/null`). Git-вызов
   сделан нефатальным (`|| true`). Загрузке это не мешало (boot-файлы к тому
@@ -196,12 +204,12 @@ ESP не нужны.
 ## Что дальше по месту
 
 Хосту `laptop` специально закомментированы модули, включаемые вручную по
-необходимости (`hosts/laptop/modules.nix`, `hosts/laptop/home.nix`) — сейчас
+необходимости (`laptop/system/default.nix`, `laptop/home/default.nix`) — сейчас
 там ничего лишнего не закомментировано, т.к. gaming-стек (docker/wine/steam/
 sunshine/xbox/vm) уже общий для всех хостов. Если на ноуте что-то из этого не
-нужно — убирай точечно из `hosts/common.nix` или переопределяй в
-`hosts/laptop/modules.nix`.
+нужно — убирай точечно из `common/system/default.nix` или переопределяй в
+`laptop/system/default.nix`.
 
 Если у ноута NVIDIA Optimus (два GPU) — донастрой `hardware.nvidia.prime` в
-`modules/gpu/nvidia.nix` с реальными bus id (`lspci | grep -E "VGA|3D"`), это
+`laptop/system/gpu.nix` с реальными bus id (`lspci | grep -E "VGA|3D"`), это
 не входит в базовую заглушку.

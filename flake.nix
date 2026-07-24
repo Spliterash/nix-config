@@ -52,11 +52,11 @@
           inherit system;
           specialArgs = {
             inherit inputs system;
+            hostname = hostName;
           }
           // settings;
           modules = [
-            ./hosts/${hostName}/modules.nix
-            ./nix.nix
+            ./${hostName}/system
             # Comma
             inputs.nix-index-database.nixosModules.default
             { programs.nix-index-database.comma.enable = true; }
@@ -67,7 +67,7 @@
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = specialArgs;
-                home-manager.users.${username} = ./hosts/${hostName}/home.nix;
+                home-manager.users.${username} = ./${hostName}/home;
                 home-manager.backupFileExtension = "backup";
               }
             )
@@ -92,10 +92,11 @@
         inherit pkgs;
         extraSpecialArgs = {
           inherit inputs system;
+          hostname = "main";
         }
         // settings;
         modules = [
-          ./hosts/main/home.nix
+          ./main/home
           # home.nix не задаёт username/homeDirectory (в реальной системе их ставит
           # NixOS-интеграция home-manager). Для standalone-конфига они обязательны,
           # но на .options не влияют — поэтому значения фейковые.

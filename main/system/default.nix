@@ -1,12 +1,12 @@
 { ... }:
 {
   imports = [
-    ../common.nix
+    ../../common/system
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./disk-config.nix
-    ../../modules/gpu/amd.nix
-    # ../../modules/powersaving.nix
+    ./gpu.nix
+    # ./powersaving.nix
   ];
 
   #? ZFS requires networking.hostId to be set

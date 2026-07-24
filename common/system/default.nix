@@ -1,19 +1,20 @@
 { pkgs, username, ... }:
 {
   imports = [
-    ../impermanence.nix
-    ../modules/locale.nix
-    ../modules/desktop-environment.nix
-    ../modules/boot-generations.nix
-    ../modules/dev-tools.nix
-    ../modules/nix-ld.nix
-    ../modules/throne.nix
-    ../modules/docker.nix
-    ../modules/wine.nix
-    ../modules/sunshine.nix
-    ../modules/hardware/xbox.nix
-    ../modules/gaming/steam.nix
-    ../modules/vm.nix
+    ./nix.nix
+    ./impermanence.nix
+    ./locale.nix
+    ./desktop-environment.nix
+    ./boot-generations.nix
+    ./dev-tools.nix
+    ./nix-ld.nix
+    ./throne.nix
+    ./docker.nix
+    ./wine.nix
+    ./sunshine.nix
+    ./hardware/xbox.nix
+    ./gaming/steam.nix
+    ./vm.nix
   ];
 
   # Use latest kernel.

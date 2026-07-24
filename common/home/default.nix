@@ -16,10 +16,17 @@
     ./sound
     ./dev-tools.nix
 
+    # Свалка
+    ./soft/packages.nix
     ./soft/jetbrains/idea.nix
     ./soft/vscode
     ./soft/wezterm
     ./soft/yazi
     ./soft/claude.nix
+    ./soft/furryfox
+    ./soft/sourcegit.nix
+    ./soft/vesktop.nix
+    ./soft/freesm.nix
+    ./soft/media.nix
   ];
 }
