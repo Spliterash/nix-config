@@ -34,4 +34,5 @@
   "gitlens.views.commits.files.layout": "tree",
   "gitlens.views.commitDetails.files.layout": "tree",
   "files.enableTrash": false,
+  "workbench.colorTheme": "Shades of Purple (Super Dark)",
 }

@@ -9,15 +9,36 @@
   disko.devices = {
     disk = {
       nvme = {
-        device = "/dev/disk/by-id/REPLACE_ME_AT_INSTALL";
-        destroy = false;
+        type = "disk";
+        device = "/dev/disk/by-id/nvme-Micron_MTFDHBA512QFD_20432B2E2878";
         content = {
           type = "gpt";
+          partitions = {
+            ESP = {
+              size = "2G";
+              type = "EF00";
+              priority = 1;
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot";
+                mountOptions = [ "umask=0077" ];
+              };
+            };
+            zfs = {
+              size = "100%";
+              content = {
+                type = "zfs";
+                pool = "zroot";
+              };
+            };
+          };
         };
       };
     };
     zpool = {
       "zroot" = {
+        type = "zpool";
         options = {
           ashift = "12";
           autotrim = "on";

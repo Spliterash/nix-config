@@ -19,6 +19,12 @@ home/                — home-manager конфиг (общий + per-soft фай
 одной командой (см. пункт 4), руками ничего создавать/монтировать/grep'ать
 не нужно.
 
+Исключение — `laptop`: он ставился на **весь диск** (NixOS-only, без Windows),
+поэтому его `disk-config.nix` описывает полный layout (ESP 2 ГБ + раздел под
+ZFS) и disko размечает *и* монтирует ESP сам — ручная разметка (§2) и ручное
+монтирование ESP (§4) для него не нужны. Ставился он удалённо по сети с `main`
+через `nixos-anywhere` — см. отдельный раздел ниже.
+
 ## 0. Что нужно знать заранее
 
 - Каждый хост — отдельный `networking.hostId` (обязателен для ZFS) и
@@ -129,6 +135,63 @@ sudo nixos-install --flake .#<имя> --root /mnt
 Дальше конфиг живёт по пути из `programs.nh.flake`
 (`/home/<юзер>/config`) — склонируй репозиторий именно туда, чтобы работали
 `nh os switch`/`nh os build` без флагов.
+
+## Установка по сети с main (nixos-anywhere) — как реально ставился laptop
+
+`laptop` ставился не локально, а удалённо с `main`: система собирается на
+`main`, по LAN на ноут копируется только результат (closure). Ноут при этом
+загружен с NixOS live-ISO с доступом по SSH (root, пароль установщика).
+
+Важно: `hosts/laptop/disk-config.nix` описывает **весь диск** — ESP (2 ГБ,
+`/boot`) и раздел под ZFS создаёт сам disko. Ручная разметка и монтирование
+ESP не нужны.
+
+1. С `main` поставь ssh-ключ на ноут и сними реальный hardware-config:
+   ```bash
+   ssh-copy-id root@<ip>
+   ssh root@<ip> 'nixos-generate-config --no-filesystems --show-hardware-config' \
+     > hosts/laptop/hardware-configuration.nix
+   ```
+2. Собери diskoScript на `main` и скопируй его closure на ноут:
+   ```bash
+   P=$(nix build .#nixosConfigurations.laptop.config.system.build.diskoScript --print-out-paths --no-link)
+   nix copy --to ssh://root@<ip> --no-check-sigs "$P"
+   ```
+3. Прогони disko на ноуте, **подав пароль шифрования в stdin** (см. грабли):
+   ```bash
+   printf '%s\n%s\n' 'PASSPHRASE' 'PASSPHRASE' | ssh root@<ip> "$P"
+   ```
+   Диск размечен, пул создан и смонтирован в `/mnt`.
+4. Установи систему (сборка на `main`, копия на ноут) и перезагрузи:
+   ```bash
+   nixos-anywhere --flake .#laptop --phases install,reboot --target-host root@<ip>
+   ```
+
+### Грабли (проверено на практике)
+
+- **Пароль ZFS ≥ 8 символов** — короче ZFS не примет, `zpool create` упадёт.
+- **`keylocation=prompt` + nixos-anywhere.** Штатная disko-фаза nixos-anywhere
+  не умеет неинтерактивно ввести passphrase (виснет на prompt), поэтому disko
+  запускается вручную (шаг 3). При непривязанном к tty stdin ZFS читает пароль
+  прямо из stdin — обычный пайп, без `-t`/`expect`. Пароль в репозиторий не
+  попадает, `keylocation` остаётся честным `prompt`.
+- **Чистый экспорт пула перед ребутом.** После ручного disko (шаг 3) пул
+  остаётся импортированным под hostid live-ISO. При `boot.zfs.forceImportRoot
+  = false` установленная система откажется импортировать «чужой» пул и упадёт
+  в initrd с ошибкой монтирования zpool. Фаза `reboot` в шаге 4 экспортирует
+  пул сама; но если ребутишь **вручную** — сначала:
+  ```bash
+  umount /mnt/boot        # снять вложенный ESP, иначе пул «busy»
+  zpool export zroot
+  ```
+  Проверить: `zpool import` должен показывать пул как импортируемый по имени
+  без предупреждений о hostid и без `-f`.
+- **`Failed to install bootloader`.** `extraInstallCommands` в
+  `modules/boot-generations.nix` вызывает `git log` по `programs.nh.flake` —
+  в свежей системе репозитория там ещё нет, git падает, и под `set -e` это
+  роняло весь установщик загрузчика (вывод git скрыт `2>/dev/null`). Git-вызов
+  сделан нефатальным (`|| true`). Загрузке это не мешало (boot-файлы к тому
+  моменту уже установлены), но ломало `nixos-install`/`nixos-rebuild`.
 
 ## Что дальше по месту
 

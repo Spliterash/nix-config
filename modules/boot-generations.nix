@@ -47,7 +47,7 @@
         if [ -n "$rev" ]; then
           short=''${rev%-dirty}; short=''${short:0:7}
           [ "$rev" = "''${rev%-dirty}" ] || short="$short*"   # * = -dirty
-          msg=$(${pkgs.git}/bin/git -c safe.directory='*' -C "${repo}" log -1 --format=%s "''${rev%-dirty}" 2>/dev/null)
+          msg=$(${pkgs.git}/bin/git -c safe.directory='*' -C "${repo}" log -1 --format=%s "''${rev%-dirty}" 2>/dev/null || true)
           title="[$gen] [$short] ($ts)''${msg:+ ''${msg:0:100}}"
         else
           title="[$gen] ($ts)"
