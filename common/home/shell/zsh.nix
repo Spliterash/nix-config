@@ -10,7 +10,7 @@
     bat
   ];
   xdg.configFile."shell/".source =
-    config.lib.file.mkOutOfStoreSymlink "${flakePath}/home/shell/scripts";
+    config.lib.file.mkOutOfStoreSymlink "${flakePath}/common/home/shell/scripts";
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
