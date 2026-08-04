@@ -15,5 +15,9 @@
     yt-dlp = {
       enable = true;
     };
+
+    mpv = {
+      enable = true;
+    };
   };
 }

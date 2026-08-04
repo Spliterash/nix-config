@@ -6,5 +6,6 @@ in
   home.packages = [
     llm.claude-code
     llm.codex
+    pkgs.docker-sbx
   ];
 }
