@@ -15,6 +15,7 @@
     ./hardware/xbox.nix
     ./gaming/steam.nix
     ./vm.nix
+    ./amneziawg.nix
   ];
 
   # Use latest kernel.
