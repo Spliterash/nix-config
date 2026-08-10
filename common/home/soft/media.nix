@@ -18,6 +18,9 @@
 
     mpv = {
       enable = true;
+      scripts = with pkgs.mpvScripts; [
+        mpris
+      ];
     };
   };
 }
