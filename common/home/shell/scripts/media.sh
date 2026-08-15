@@ -1,14 +1,15 @@
 # Конвертация любого говна в mp4, который без вопросов сожрёт телега и любой плеер:
 # H.264 High/yuv420p + AAC-LC стерео 48k, moov в начале, чётные размеры,
 # ключевой кадр раз в 2 секунды, ровно одна аудиодорожка (телега играет только первую).
-#   ffmp4 <вход> [выход] [-q QP] [-b битрейт] [-- опции ffmpeg]
+#   ffmp4 <вход> [выход] [-q QP] [-b битрейт] [-a дорожка] [-- опции ffmpeg]
 #     выход  по умолчанию — {вход_без_расширения}.ff.mp4 рядом с исходником
 #     -q     качество 18..30, меньше = лучше и жирнее (по умолчанию 23)
 #     -b     вместо -q: средний битрейт (8M)
+#     -a     номер аудиодорожки начиная с 1 (по умолчанию 1)
 ffmp4() {
     local input="$1"
     if [ -z "$input" ]; then
-        echo "usage: ffmp4 <input> [output] [-q QP] [-b BITRATE] [-- ffmpeg opts]" >&2
+        echo "usage: ffmp4 <input> [output] [-q QP] [-b BITRATE] [-a TRACK] [-- ffmpeg opts]" >&2
         return 1
     fi
     shift
@@ -20,15 +21,20 @@ ffmp4() {
     esac
     [ -n "$output" ] || output="${input%.*}.ff.mp4"
 
-    local qp=23 bitrate=""
+    local qp=23 bitrate="" atrack=1
     while [ $# -gt 0 ]; do
         case "$1" in
             -q) qp="$2"; bitrate=""; shift 2 ;;
             -b) bitrate="$2"; shift 2 ;;
+            -a) atrack="$2"; shift 2 ;;
             --) shift; break ;;
             *)  bitrate="$1"; shift ;;
         esac
     done
+
+    case "$atrack" in
+        ''|*[!0-9]*|0) echo "ffmp4: -a должен быть числом начиная с 1" >&2; return 1 ;;
+    esac
 
     local -a rc
     if [ -n "$bitrate" ]; then
@@ -43,7 +49,7 @@ ffmp4() {
            -hwaccel_device drm128 \
            -i "$input" \
            -vf "format=nv12|vaapi,hwupload,scale_vaapi=w=trunc(iw/2)*2:h=trunc(ih/2)*2" \
-           -map 0:v:0 -map '0:a:0?' \
+           -map 0:v:0 -map "0:a:$((atrack - 1))?" \
            -c:v h264_vaapi \
            -profile:v high \
            -g 50 \

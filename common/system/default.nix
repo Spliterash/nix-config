@@ -16,6 +16,7 @@
     ./gaming/steam.nix
     ./vm.nix
     ./amneziawg.nix
+    ./gpu-screen-recorder.nix
   ];
 
   # Use latest kernel.
