@@ -1,4 +1,4 @@
-{ flakePath, ... }: {
+{ flakePath, lib, ... }: {
   home.shellAliases = {
     nhs = "sudo true && nh os switch ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
     nhb = "sudo true && nh os boot ~/config && notify-send 'System build success' && exec $SHELL || notify-send 'System build failed'";
@@ -15,5 +15,15 @@
     ncode = "code --reuse-window $(nix eval --offline --file '<nixpkgs>' path)/pkgs/top-level/all-packages.nix";
 
     nn = "nh os switch ${flakePath} --keep-going";
+
+    grok = lib.concatStringsSep " " [
+      "ANTHROPIC_DEFAULT_SONNET_MODEL=grok-4.6"
+      "ANTHROPIC_DEFAULT_OPUS_MODEL=grok-4.6"
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL=grok-4.6"
+      "ANTHROPIC_DEFAULT_FABLE_MODEL=grok-4.6"
+      "ANTHROPIC_MODEL=grok-4.6"
+      "CLAUDE_CODE_MAX_CONTEXT_TOKENS=500000"
+      "claude"
+    ];
   };
 }
