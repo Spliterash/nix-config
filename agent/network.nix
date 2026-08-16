@@ -1,4 +1,9 @@
-{ username, ... }: {
+{ username, ... }:
+let
+  stateDir = "/home/${username}/agent-vm";
+  mountDir = stateDir + "/mount";
+in
+{
   # Линк хост↔гость на tap-agent. Подсеть должна быть свободна на хосте,
   # иначе agent-vm-net.service упадёт с "File exists".
   gateway = "10.234.0.1";
@@ -11,13 +16,15 @@
   # Всё, что VM держит на диске: ssh-ключ, docker.qcow2, эфемерный корень,
   # временные файлы qemu. Путь абсолютный — run-agent-vm делает cd в свой
   # $TMPDIR перед запуском qemu, относительные уехали бы туда.
-  stateDir = "/home/${username}/agent-vm";
+  inherit stateDir;
 
   # Имена, уходящие в proxy-аутбаунд: apex и любая глубина.
   proxy = [
-    "*.ipify.org"
-    "*.openai.com"
+    "*.iprs.fly.dev"
+
+    "*.amazonaws.com"
     "*.anthropic.com"
+    "*.claude.com"
   ];
 
   # Куда они уходят. Это outbound sing-box как в документации, любого типа
@@ -38,6 +45,9 @@
 
   # Каталоги хоста в гостя (9p, rw).
   mounts = [
-    # { host = "/home/spliterash/projects"; guest = "/projects"; }
+    {
+      host = "/mnt/data/Develop/slop-engine";
+      guest = "/mnt/projects/slop-engine";
+    }
   ];
 }

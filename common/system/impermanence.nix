@@ -67,6 +67,7 @@ in
         ".vscode-shared" # ? recent and trust folders
         ".sourcegit"
         ".java"
+        "agent-vm"
 
         #? games
         ".steam"
