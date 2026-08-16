@@ -39,7 +39,7 @@
   };
 
   outputs =
-    { nixpkgs, ... }@inputs:
+    { self, nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
       settings = import ./settings.nix;
@@ -51,7 +51,7 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
-            inherit inputs system;
+            inherit inputs system self;
             hostname = hostName;
           }
           // settings;
@@ -77,15 +77,25 @@
     in
     {
       #? Приколюха чтобы сурсы флейков складывать в папку инпут, мб не нужно, потом уберу
-      packages.${system}.flakeInputs = pkgs.linkFarm "flake-inputs" (
-        nixpkgs.lib.mapAttrsToList (name: input: {
-          inherit name;
-          path = input.outPath;
-        }) (builtins.removeAttrs inputs [ "self" ])
-      );
+      packages.${system} = {
+        flakeInputs = pkgs.linkFarm "flake-inputs" (
+          nixpkgs.lib.mapAttrsToList (name: input: {
+            inherit name;
+            path = input.outPath;
+          }) (builtins.removeAttrs inputs [ "self" ])
+        );
+      };
 
       nixosConfigurations.main = mkHost "main";
       nixosConfigurations.laptop = mkHost "laptop";
+      nixosConfigurations.agent = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit inputs system;
+        }
+        // settings;
+        modules = [ ./agent ];
+      };
 
       #? Залупа чтобы работал лангуаге сервер в хом менеджере
       homeConfigurations.nixd = inputs.home-manager.lib.homeManagerConfiguration {
