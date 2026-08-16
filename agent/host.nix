@@ -4,9 +4,9 @@
   self,
   username,
   ...
-}:
+}@allInputs:
 let
-  net = import ./network.nix;
+  net = import ./network.nix allInputs;
   vm = self.nixosConfigurations.agent.config.system.build.vm;
 
   tap = "tap-agent";
@@ -23,21 +23,41 @@ let
     unit = "agent-vm.service";
   };
 
-  #! _secret подставляется root'ом в ExecStartPre sing-box, quote=false —
-  #! содержимое файла парсится как JSON, а не как строка.
+  #! { file = "..."; } → _secret: содержимое подставит root в ExecStartPre
+  #! sing-box, в /nix/store уедет только путь. Рекурсивно, чтобы работало и
+  #! во вложенных полях outbound'а (tls, transport, ...).
+  fromFiles =
+    v:
+    if lib.isList v then
+      map fromFiles v
+    else if !lib.isAttrs v then
+      v
+    else if lib.attrNames v == [ "file" ] then
+      { _secret = v.file; }
+    else
+      lib.mapAttrs (lib.const fromFiles) v;
+
+  #! outbound целиком из файла. _secret умеет только заменять узел, а тег надо
+  #! дописать — поэтому отдельным ExecStartPre готовим файл уже с тегом, и уже
+  #! на него смотрит _secret. mkBefore ставит нас перед генератором модуля.
+  wholeFromFile = lib.attrNames net.outbound == [ "file" ];
+  #! расширение НЕ .json: модуль запускает `sing-box -C /run/sing-box`, а это
+  #! каталог конфигов, и любой *.json оттуда подхватится как часть конфига
+  taggedOutbound = "/run/sing-box/proxy-outbound.secret";
+  prepOutbound = pkgs.writeShellScript "agent-vm-outbound" ''
+    ${lib.getExe pkgs.jq} '. + { tag: "proxy" }' \
+      ${lib.escapeShellArg (net.outbound.file or "")} >${taggedOutbound}
+  '';
+
+  #! tag наш, поэтому справа от //: в network.nix его писать не надо
   proxyOutbound =
-    if lib.isAttrs net.socks5 then
+    if wholeFromFile then
       {
-        _secret = net.socks5.file;
+        _secret = taggedOutbound;
         quote = false;
       }
     else
-      {
-        type = "socks";
-        tag = "proxy";
-        server = lib.head (lib.splitString ":" net.socks5);
-        server_port = lib.toInt (lib.last (lib.splitString ":" net.socks5));
-      };
+      fromFiles net.outbound // { tag = "proxy"; };
 
   nftRules = pkgs.writeText "agent-vm.nft" ''
     table inet agent-vm
@@ -132,6 +152,7 @@ in
         ]
         ++ lib.optional (net.proxy != [ ]) {
           domain_suffix = map (lib.removePrefix "*.") net.proxy;
+          action = "route";
           outbound = "proxy";
         };
       };
@@ -139,6 +160,7 @@ in
   };
 
   systemd.services.sing-box = {
+    serviceConfig.ExecStartPre = lib.mkIf wholeFromFile (lib.mkBefore [ "+${prepOutbound}" ]);
     wantedBy = lib.mkForce [ ];
     partOf = [ "agent-vm.service" ];
     requires = [ "agent-vm-net.service" ];

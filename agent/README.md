@@ -43,11 +43,31 @@ proxy = [
 Что не попало в список — идёт напрямую. Если прокси лежит, эти имена просто
 не открываются, остальное продолжает работать.
 
-**Куда их отправлять:**
+**Куда их отправлять.** Это outbound из документации sing-box, любого типа —
+`socks`, `http`, `vless`, `trojan` и так далее. Поле `tag` писать не надо, оно
+проставляется само:
 
 ```nix
-socks5 = "127.0.0.1:1080";
+outbound = {
+  type = "socks";
+  server = "127.0.0.1";
+  server_port = 1080;
+};
 ```
+
+С логином и паролем:
+
+```nix
+outbound = {
+  type = "socks";
+  server = "10.9.8.7";
+  server_port = 1080;
+  username = "sekai";
+  password = "hunter2";
+};
+```
+
+Справочник по полям — [sing-box.sagernet.org/configuration/outbound](https://sing-box.sagernet.org/configuration/outbound/).
 
 **Папки хоста внутрь VM:**
 
@@ -57,32 +77,76 @@ mounts = [
 ];
 ```
 
-## Если прокси — секрет
+## Если пароль нельзя в git
 
-Чтобы адрес и пароли не попали в git, положи их в файл вне репозитория:
+Любую строку внутри `outbound` можно заменить на `{ file = "..."; }` — путь к
+файлу вне репозитория. В файле лежит только само значение, одной строкой.
+Ни в git, ни в `/nix/store` оно не попадёт: содержимое подставляет root
+непосредственно перед стартом sing-box.
+
+Кладём пароль:
 
 ```sh
-sudo mkdir -p /etc/agent-vm
-sudo tee /etc/agent-vm/outbound.json <<'EOF'
-{
-  "type": "socks",
-  "tag": "proxy",
-  "server": "10.9.8.7",
-  "server_port": 1080,
-  "username": "логин",
-  "password": "пароль"
-}
-EOF
-sudo chmod 600 /etc/agent-vm/outbound.json
+printf 'hunter2\n' > ~/agent-vm/socks-password
+chmod 600 ~/agent-vm/socks-password
 ```
 
-И в `network.nix` вместо строки:
+И ссылаемся на него:
 
 ```nix
-socks5.file = "/etc/agent-vm/outbound.json";
+outbound = {
+  type = "socks";
+  server = "10.9.8.7";
+  server_port = 1080;
+  username = "sekai";
+  password = { file = "/home/spliterash/agent-vm/socks-password"; };
+};
 ```
 
-Строка `"tag": "proxy"` обязательна, остальное — на твоё усмотрение.
+Так можно с любым полем, не только с паролем — например, если и адрес прокси
+светить не хочется:
+
+```nix
+outbound = {
+  type = "socks";
+  server = { file = "/home/spliterash/agent-vm/socks-server"; };
+  server_port = 1080;
+  username = { file = "/home/spliterash/agent-vm/socks-username"; };
+  password = { file = "/home/spliterash/agent-vm/socks-password"; };
+};
+```
+
+Один файл — одно значение. Числа (как `server_port`) так задать нельзя, они
+остаются в `network.nix`.
+
+## Или весь outbound одним файлом
+
+Если из репозитория надо убрать вообще всё — пиши outbound целиком в JSON.
+Тег в него по-прежнему не нужен:
+
+```sh
+cat > ~/agent-vm/outbound.json <<'EOF'
+{
+  "type": "socks",
+  "server": "10.9.8.7",
+  "server_port": 1080,
+  "username": "sekai",
+  "password": "hunter2"
+}
+EOF
+chmod 600 ~/agent-vm/outbound.json
+```
+
+В `network.nix` тогда вместо всего блока `outbound = { ... }`:
+
+```nix
+outbound.file = "/home/spliterash/agent-vm/outbound.json";
+```
+
+Формат файла — ровно то, что в
+[документации по outbound](https://sing-box.sagernet.org/configuration/outbound/),
+так что тем же способом задаётся не только socks: `vless`, `trojan`,
+`shadowsocks` и остальные пишутся туда как есть.
 
 ## Файлы
 

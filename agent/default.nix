@@ -7,10 +7,10 @@
   system,
   flakePath,
   ...
-}:
+}@allInputs:
 let
   llm = inputs.llm-agents.packages.${system};
-  net = import ./network.nix;
+  net = import ./network.nix allInputs;
   #! ключ генерит хост при первом старте и отдаёт сюда шарой, поэтому в
   #! репозитории его нет; sshd со StrictModes требует совпадения uid с хостом
   sshShare = "/mnt/agent-ssh";
