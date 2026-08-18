@@ -25,5 +25,14 @@
       "CLAUDE_CODE_MAX_CONTEXT_TOKENS=500000"
       "claude"
     ];
+    deepseek = lib.concatStringsSep " " [
+      "ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-v4-flash"
+      "ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v4-pro"
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-v4-flash"
+      "ANTHROPIC_DEFAULT_FABLE_MODEL=deepseek-v4-pro"
+      "ANTHROPIC_MODEL=deepseek-v4-flash"
+      "CLAUDE_CODE_MAX_CONTEXT_TOKENS=1000000"
+      "claude"
+    ];
   };
 }
