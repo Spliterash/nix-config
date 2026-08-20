@@ -374,122 +374,8 @@ in
               icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
               definedAliases = [ "ng" ];
             };
-            "scoop.sh" = {
-              urls = [ { template = "https://scoop.sh/#/apps?q={searchTerms}"; } ];
-
-              iconMapObj."32" = "https://scoop.sh/favicon.ico";
-              definedAliases = [ "sc" ];
-            };
-            "Anime" = {
-              urls = [
-                {
-                  template = "https://site.yummyani.me/search";
-                  params = [
-                    {
-                      name = "word";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-
-              iconMapObj."32" = "https://site.yummyani.me/favicon.ico";
-              definedAliases = [ "a" ];
-            };
-            "Shikimori" = {
-              urls = [
-                {
-                  template = "https://shiki.one/animes";
-                  params = [
-                    {
-                      name = "search";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-
-              iconMapObj."32" = "https://shikimori.one/favicon.ico";
-              definedAliases = [ "aa" ];
-            };
-            "RuTracker" = {
-              urls = [
-                {
-                  template = "https://rutracker.org/forum/tracker.php";
-                  params = [
-                    {
-                      name = "nm";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-
-              iconMapObj."32" = "https://rutracker.org/favicon.ico";
-              definedAliases = [ "ru" ];
-            };
-            # TODO: not working due to url escapism
-            "Web Archive Wayback" = {
-              urls = [ { template = "https://web.archive.org/web/*/{searchTerms}"; } ];
-              iconMapObj."32" = "https://web-static.archive.org/_static/images/archive.ico";
-              definedAliases = [ "ar" ];
-            };
-            "Web Archive Is" = {
-              urls = [ { template = "https://archive.is/{searchTerms}"; } ];
-              iconMapObj."32" = "https://archive.is/favicon.ico";
-              definedAliases = [ "arr" ];
-            };
-            "Grok" = {
-              urls = [
-                {
-                  template = "https://grok.com";
-                  params = [
-                    {
-                      name = "q";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-
-              iconMapObj."32" = "https://grok.com/images/favicon-dark.png";
-              definedAliases = [ "gr" ];
-            };
             # needs violentmonkey script
-            "Gemini" = {
-              urls = [
-                {
-                  template = "https://gemini.google.com/app";
-                  params = [
-                    {
-                      name = "q";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-
-              iconMapObj."32" =
-                "https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg";
-              definedAliases = [ "ge" ];
-            };
             # TODOL needs violentmonkey script which doesn't exist yet
-            "Claude" = {
-              urls = [
-                {
-                  template = "https://claude.ai/new";
-                  params = [
-                    {
-                      name = "q";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-
-              iconMapObj."32" = "https://claude.ai/favicon.svg";
-              definedAliases = [ "cl" ];
-            };
             "GitHub" = {
               urls = [
                 {
@@ -589,7 +475,22 @@ in
               iconMapObj."32" = "https://yandex.ru/maps/favicon.svg";
               definedAliases = [ "ym" ];
             };
+            "DeepSeek" = {
+              urls = [
+                {
+                  template = "https://chat.deepseek.com";
+                  params = [
+                    {
+                      name = "q";
+                      value = "{searchTerms}";
+                    }
+                  ];
+                }
+              ];
 
+              iconMapObj."32" = "https://fe-static.deepseek.com/chat/favicon.svg";
+              definedAliases = [ "ds" ];
+            };
             #? it wont work for some strange google reason
             # "YouTube History" = {
             #   urls = [
