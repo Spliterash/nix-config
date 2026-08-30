@@ -12,6 +12,7 @@
     ./docker.nix
     ./wine.nix
     ./sunshine.nix
+    ./hardware/devices.nix
     ./hardware/xbox.nix
     ./gaming/steam.nix
     ./vm.nix
