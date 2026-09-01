@@ -17,47 +17,167 @@ let
   qmpSocket = "${runDir}/qmp.sock";
   sshKey = "${net.stateDir}/ssh/id_ed25519";
   dockerImage = "${net.stateDir}/docker.qcow2";
+  fileShares = "/run/agent-vm-files";
+
+  emptyConfig = pkgs.writeText "agent-vm-empty-config.json" "{}";
+  configTemplate = (pkgs.formats.json { }).generate "agent-vm-config.json" {
+    proxy = [ ];
+    outbound = null;
+    mounts = [ ];
+  };
+
+  mountsJq = ''
+    def mount_items:
+      (.mounts // []) | if type == "array" then . else [.] end;
+    def normalize_mount:
+      if type == "string" then
+        split(":") as $parts | {
+          host: $parts[0],
+          guest: $parts[1],
+          readOnly: (($parts[2] // "rw") == "ro")
+        }
+      else
+        {
+          host: .host,
+          guest: .guest,
+          readOnly: (.readOnly // false)
+        }
+      end;
+    [mount_items[] | normalize_mount]
+  '';
 
   avm = pkgs.callPackage ./avm.nix {
-    inherit sshHost;
+    inherit sshHost configTemplate mountsJq;
+    configFile = net.configFile;
     unit = "agent-vm.service";
   };
 
-  #! { file = "..."; } → _secret: содержимое подставит root в ExecStartPre
-  #! sing-box, в /nix/store уедет только путь. Рекурсивно, чтобы работало и
-  #! во вложенных полях outbound'а (tls, transport, ...).
-  fromFiles =
-    v:
-    if lib.isList v then
-      map fromFiles v
-    else if !lib.isAttrs v then
-      v
-    else if lib.attrNames v == [ "file" ] then
-      { _secret = v.file; }
-    else
-      lib.mapAttrs (lib.const fromFiles) v;
-
-  #! outbound целиком из файла. _secret умеет только заменять узел, а тег надо
-  #! дописать — поэтому отдельным ExecStartPre готовим файл уже с тегом, и уже
-  #! на него смотрит _secret. mkBefore ставит нас перед генератором модуля.
-  wholeFromFile = lib.attrNames net.outbound == [ "file" ];
-  #! расширение НЕ .json: модуль запускает `sing-box -C /run/sing-box`, а это
-  #! каталог конфигов, и любой *.json оттуда подхватится как часть конфига
-  taggedOutbound = "/run/sing-box/proxy-outbound.secret";
-  prepOutbound = pkgs.writeShellScript "agent-vm-outbound" ''
-    ${lib.getExe pkgs.jq} '. + { tag: "proxy" }' \
-      ${lib.escapeShellArg (net.outbound.file or "")} >${taggedOutbound}
+  configCheck = ''
+    def proxy_list:
+      type == "array" and all(.[];
+        type == "string" and (ltrimstr("*.") | length > 0)
+      );
+    def absolute_path:
+      type == "string" and length > 0 and startswith("/");
+    def mount_item:
+      if type == "object" then
+        (.host | absolute_path)
+        and (.guest | absolute_path)
+        and ((has("readOnly") | not) or (.readOnly | type == "boolean"))
+      elif type == "string" then
+        split(":") as $parts
+        | (($parts | length) == 2 or ($parts | length) == 3)
+        and ($parts[0] | absolute_path)
+        and ($parts[1] | absolute_path)
+        and (($parts | length) == 2 or ($parts[2] == "ro" or $parts[2] == "rw"))
+      else
+        false
+      end;
+    def mount_list:
+      (if type == "array" then . else [.] end) | all(.[]; mount_item);
+    type == "object"
+    and ((.proxy // []) | proxy_list)
+    and ((.mounts // []) | mount_list)
+    and (((.proxy // []) | length) == 0 or (.outbound | type == "object"))
   '';
 
-  #! tag наш, поэтому справа от //: в network.nix его писать не надо
-  proxyOutbound =
-    if wholeFromFile then
-      {
-        _secret = taggedOutbound;
-        quote = false;
-      }
-    else
-      fromFiles net.outbound // { tag = "proxy"; };
+  cleanupMounts = pkgs.writeShellScript "agent-vm-cleanup-mounts" ''
+    shopt -s nullglob
+    for source in ${fileShares}/avm*/source; do
+      ${lib.getExe' pkgs.util-linux "umount"} "$source" 2>/dev/null || true
+    done
+    ${lib.getExe' pkgs.coreutils "rm"} -rf ${fileShares}
+  '';
+
+  prepareMounts = pkgs.writeShellScript "agent-vm-prepare-mounts" ''
+    set -euo pipefail
+    config=${lib.escapeShellArg net.configFile}
+    [[ -f "$config" ]] || config=${emptyConfig}
+
+    ${lib.getExe pkgs.jq} -e '${configCheck}' "$config" >/dev/null || {
+      echo "agent-vm: некорректный локальный конфиг $config" >&2
+      exit 1
+    }
+    ${cleanupMounts}
+    ${lib.getExe' pkgs.coreutils "install"} -d -m 0755 ${fileShares}
+
+    i=0
+    while IFS= read -r mount; do
+      host=$(${lib.getExe pkgs.jq} -r '.host' <<<"$mount")
+      if [[ -f "$host" ]]; then
+        share=${fileShares}/avm$i
+        ${lib.getExe' pkgs.coreutils "install"} -d -m 0755 "$share"
+        ${lib.getExe' pkgs.coreutils "touch"} "$share/source"
+        ${lib.getExe' pkgs.util-linux "mount"} --bind "$host" "$share/source"
+      fi
+      i=$((i + 1))
+    done < <(${lib.getExe pkgs.jq} -c '${mountsJq} | .[]' "$config")
+  '';
+
+  proxyOutboundFile = "/run/sing-box/proxy-outbound.secret";
+  proxyRulesFile = "/run/sing-box/proxy-rules.secret";
+  prepProxy = pkgs.writeShellScript "agent-vm-proxy" ''
+    set -euo pipefail
+    config=${lib.escapeShellArg net.configFile}
+    [[ -f "$config" ]] || config=${emptyConfig}
+
+    ${lib.getExe pkgs.jq} -e '${configCheck}' "$config" >/dev/null || {
+      echo "agent-vm: некорректный локальный конфиг $config" >&2
+      exit 1
+    }
+    ${lib.getExe pkgs.jq} '
+      if ((.proxy // []) | length) == 0 then
+        { type: "direct", tag: "proxy" }
+      else
+        .outbound + { tag: "proxy" }
+      end
+    ' "$config" >${proxyOutboundFile}
+    ${lib.getExe pkgs.jq} '[
+      if ((.proxy // []) | length) > 0 then
+        { domain_suffix: [.proxy[] | ltrimstr("*.")] }
+      else
+        { domain_regex: ["a^"] }
+      end
+    ]' "$config" >${proxyRulesFile}
+  '';
+
+  startVm = pkgs.writeShellScript "agent-vm-start" ''
+    set -euo pipefail
+    config=${lib.escapeShellArg net.configFile}
+    [[ -f "$config" ]] || config=${emptyConfig}
+
+    ${lib.getExe pkgs.jq} -e '${configCheck}' "$config" >/dev/null || {
+      echo "agent-vm: некорректный локальный конфиг $config" >&2
+      exit 1
+    }
+
+    qemu_args=(
+      -qmp
+      ${lib.escapeShellArg "unix:${qmpSocket},server=on,wait=off"}
+    )
+    i=0
+    while IFS= read -r mount; do
+      host=$(${lib.getExe pkgs.jq} -r '.host' <<<"$mount")
+      read_only=$(${lib.getExe pkgs.jq} -r '.readOnly' <<<"$mount")
+      if [[ -d "$host" ]]; then
+        export_path=$host
+      elif [[ -f "$host" ]]; then
+        export_path=${fileShares}/avm$i
+      else
+        echo "agent-vm: mount[$i].host не является файлом или каталогом: $host" >&2
+        exit 1
+      fi
+      virtfs="local,path=$export_path,security_model=none,mount_tag=avm$i"
+      [[ $read_only == true ]] && virtfs+=,readonly=on
+      qemu_args+=(
+        -virtfs
+        "$virtfs"
+      )
+      i=$((i + 1))
+    done < <(${lib.getExe pkgs.jq} -c '${mountsJq} | .[]' "$config")
+
+    exec ${lib.getExe vm} "''${qemu_args[@]}"
+  '';
 
   nftRules = pkgs.writeText "agent-vm.nft" ''
     table inet agent-vm
@@ -137,30 +257,46 @@ in
           type = "direct";
           tag = "direct";
         }
-        proxyOutbound
+        {
+          _secret = proxyOutboundFile;
+          quote = false;
+        }
       ];
       route = {
         default_domain_resolver = "local";
         auto_detect_interface = true;
         final = "direct";
+        rule_set = [
+          {
+            type = "inline";
+            tag = "proxy";
+            rules = {
+              _secret = proxyRulesFile;
+              quote = false;
+            };
+          }
+        ];
         rules = [
           { action = "sniff"; }
           {
             protocol = "dns";
             action = "hijack-dns";
           }
-        ]
-        ++ lib.optional (net.proxy != [ ]) {
-          domain_suffix = map (lib.removePrefix "*.") net.proxy;
-          action = "route";
-          outbound = "proxy";
-        };
+          {
+            rule_set = [ "proxy" ];
+            action = "route";
+            outbound = "proxy";
+          }
+        ];
       };
     };
   };
 
   systemd.services.sing-box = {
-    serviceConfig.ExecStartPre = lib.mkIf wholeFromFile (lib.mkBefore [ "+${prepOutbound}" ]);
+    serviceConfig.ExecStartPre = lib.mkMerge [
+      (lib.mkBefore [ "+${prepProxy}" ])
+      (lib.mkAfter [ "${lib.getExe pkgs.sing-box} check -c /run/sing-box/config.json" ])
+    ];
     wantedBy = lib.mkForce [ ];
     partOf = [ "agent-vm.service" ];
     requires = [ "agent-vm-net.service" ];
@@ -215,11 +351,12 @@ in
     environment = {
       TMPDIR = runDir;
       USE_TMPDIR = "1";
-      QEMU_OPTS = "-qmp unix:${qmpSocket},server=on,wait=off";
     };
-    requires = [ "agent-vm-net.service" ];
-    wants = [
+    requires = [
+      "agent-vm-net.service"
       "sing-box.service"
+    ];
+    wants = [
       "agent-nix-daemon.service"
     ];
     after = [
@@ -252,15 +389,19 @@ in
         exit 0
       ''} $MAINPID";
       TimeoutStopSec = 45;
-      ExecStartPre = pkgs.writeShellScript "agent-vm-pre" ''
-        set -eu
-        ${lib.getExe' pkgs.coreutils "mkdir"} -p ${runDir} ${dirOf sshKey}
-        [ -f ${sshKey} ] ||
-          ${lib.getExe' pkgs.openssh "ssh-keygen"} -q -t ed25519 -N "" -C agent-vm -f ${sshKey}
-        [ -f ${dockerImage} ] ||
-          ${lib.getExe' pkgs.qemu "qemu-img"} create -f qcow2 ${dockerImage} 32G
-      '';
-      ExecStart = lib.getExe vm;
+      ExecStartPre = [
+        "+${prepareMounts}"
+        (pkgs.writeShellScript "agent-vm-pre" ''
+          set -eu
+          ${lib.getExe' pkgs.coreutils "mkdir"} -p ${runDir} ${dirOf sshKey}
+          [ -f ${sshKey} ] ||
+            ${lib.getExe' pkgs.openssh "ssh-keygen"} -q -t ed25519 -N "" -C agent-vm -f ${sshKey}
+          [ -f ${dockerImage} ] ||
+            ${lib.getExe' pkgs.qemu "qemu-img"} create -f qcow2 ${dockerImage} 32G
+        '')
+      ];
+      ExecStart = startVm;
+      ExecStopPost = "+${cleanupMounts}";
     };
   };
 }

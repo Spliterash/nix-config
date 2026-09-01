@@ -1,7 +1,6 @@
 { username, ... }:
 let
   stateDir = "/home/${username}/agent-vm";
-  mountDir = stateDir + "/mount";
 in
 {
   # Линк хост↔гость на tap-agent. Подсеть должна быть свободна на хосте,
@@ -17,37 +16,5 @@ in
   # временные файлы qemu. Путь абсолютный — run-agent-vm делает cd в свой
   # $TMPDIR перед запуском qemu, относительные уехали бы туда.
   inherit stateDir;
-
-  # Имена, уходящие в proxy-аутбаунд: apex и любая глубина.
-  proxy = [
-    "*.iprs.fly.dev"
-
-    "*.amazonaws.com"
-    "*.anthropic.com"
-    "*.claude.com"
-  ];
-
-  # Куда они уходят. Это outbound sing-box как в документации, любого типа
-  # (socks, http, vless, trojan, ...) — только без "tag", его проставляем мы.
-  #
-  # Любую строку внутри можно заменить на { file = "..."; } — путь к файлу вне
-  # стора, где лежит одно значение одной строкой. Либо задать весь outbound
-  # одним JSON-файлом: outbound.file = "...". В обоих случаях содержимое
-  # подставляет root перед стартом sing-box, в /nix/store уходит только путь.
-  outbound = {
-    # type = "socks";
-    # server = "127.0.0.1";
-    # server_port = 1080;
-    # username = "sekai";
-    # password = { file = "/home/${username}/agent-vm/socks-password"; };
-  };
-  outbound.file = "/home/${username}/agent-vm/proxy.json";
-
-  # Каталоги хоста в гостя (9p, rw).
-  mounts = [
-    {
-      host = "/mnt/data/Develop/slop-engine";
-      guest = "/mnt/projects/slop-engine";
-    }
-  ];
+  configFile = stateDir + "/config.json";
 }

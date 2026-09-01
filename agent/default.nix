@@ -47,7 +47,10 @@ in
     firewall.allowedTCPPorts = [ 22 ];
   };
 
-  programs.zsh.enable = true;
+  programs.zsh = {
+    enable = true;
+    enableGlobalCompInit = false;
+  };
   environment.shells = [ pkgs.zsh ];
   environment.variables.NIX_REMOTE = "daemon";
 
@@ -139,23 +142,11 @@ in
     #! loose-кэш не видит пути, появившиеся в хостовом store после старта VM
     nixStore9pCache = "none";
 
-    sharedDirectories = {
-      agentssh = {
-        source = "${net.stateDir}/ssh";
-        target = sshShare;
-        securityModel = "none";
-      };
-    }
-    // lib.listToAttrs (
-      lib.imap0 (i: m: {
-        name = "m${toString i}";
-        value = {
-          source = m.host;
-          target = m.guest;
-          securityModel = "none";
-        };
-      }) net.mounts
-    );
+    sharedDirectories.agentssh = {
+      source = "${net.stateDir}/ssh";
+      target = sshShare;
+      securityModel = "none";
+    };
 
     fileSystems."/var/lib/docker" = {
       device = "/dev/disk/by-id/virtio-docker";
@@ -199,6 +190,8 @@ in
     ];
     #! в госте нет чекаута флейка, на который смотрит mkOutOfStoreSymlink
     xdg.configFile."shell/".source = lib.mkForce ../common/home/shell/scripts;
+    #! compaudit обходит completion-каталоги в /nix/store через медленный 9p
+    programs.zsh.completionInit = "autoload -U compinit && compinit -C";
     home.packages = [
       llm.claude-code
       llm.codex

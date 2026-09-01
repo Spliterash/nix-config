@@ -27,126 +27,83 @@ avm logs proxy       # куда уходит трафик
 
 ## Настроить
 
-Всё в одном файле — `agent/network.nix`. После правки нужен `nn`
-(пересборка системы), иначе изменения не подхватятся.
-
-**Какие имена идут через прокси.** `*.` означает и сам домен, и любые
-поддомены:
-
-```nix
-proxy = [
-  "*.openai.com"
-  "*.anthropic.com"
-];
-```
-
-Что не попало в список — идёт напрямую. Если прокси лежит, эти имена просто
-не открываются, остальное продолжает работать.
-
-**Куда их отправлять.** Это outbound из документации sing-box, любого типа —
-`socks`, `http`, `vless`, `trojan` и так далее. Поле `tag` писать не надо, оно
-проставляется само:
-
-```nix
-outbound = {
-  type = "socks";
-  server = "127.0.0.1";
-  server_port = 1080;
-};
-```
-
-С логином и паролем:
-
-```nix
-outbound = {
-  type = "socks";
-  server = "10.9.8.7";
-  server_port = 1080;
-  username = "sekai";
-  password = "hunter2";
-};
-```
-
-Справочник по полям — [sing-box.sagernet.org/configuration/outbound](https://sing-box.sagernet.org/configuration/outbound/).
-
-**Папки хоста внутрь VM:**
-
-```nix
-mounts = [
-  { host = "/home/spliterash/projects"; guest = "/projects"; }
-];
-```
-
-## Если пароль нельзя в git
-
-Любую строку внутри `outbound` можно заменить на `{ file = "..."; }` — путь к
-файлу вне репозитория. В файле лежит только само значение, одной строкой.
-Ни в git, ни в `/nix/store` оно не попадёт: содержимое подставляет root
-непосредственно перед стартом sing-box.
-
-Кладём пароль:
+Машинные настройки лежат в `~/agent-vm/config.json`, вне репозитория и
+`/nix/store`. Команда создаст пустой конфиг с правами `0600` и откроет его в
+`$VISUAL`, `$EDITOR` или `vi`:
 
 ```sh
-printf 'hunter2\n' > ~/agent-vm/socks-password
-chmod 600 ~/agent-vm/socks-password
+avm config
 ```
 
-И ссылаемся на него:
+Путь можно получить без открытия редактора: `avm config path`.
 
-```nix
-outbound = {
-  type = "socks";
-  server = "10.9.8.7";
-  server_port = 1080;
-  username = "sekai";
-  password = { file = "/home/spliterash/agent-vm/socks-password"; };
-};
-```
+Пример полного конфига:
 
-Так можно с любым полем, не только с паролем — например, если и адрес прокси
-светить не хочется:
-
-```nix
-outbound = {
-  type = "socks";
-  server = { file = "/home/spliterash/agent-vm/socks-server"; };
-  server_port = 1080;
-  username = { file = "/home/spliterash/agent-vm/socks-username"; };
-  password = { file = "/home/spliterash/agent-vm/socks-password"; };
-};
-```
-
-Один файл — одно значение. Числа (как `server_port`) так задать нельзя, они
-остаются в `network.nix`.
-
-## Или весь outbound одним файлом
-
-Если из репозитория надо убрать вообще всё — пиши outbound целиком в JSON.
-Тег в него по-прежнему не нужен:
-
-```sh
-cat > ~/agent-vm/outbound.json <<'EOF'
+```json
 {
-  "type": "socks",
-  "server": "10.9.8.7",
-  "server_port": 1080,
-  "username": "sekai",
-  "password": "hunter2"
+  "proxy": [
+    "*.openai.com",
+    "*.anthropic.com"
+  ],
+  "outbound": {
+    "type": "socks",
+    "server": "10.9.8.7",
+    "server_port": 1080,
+    "username": "sekai",
+    "password": "hunter2"
+  },
+  "mounts": [
+    {
+      "host": "/home/spliterash/projects",
+      "guest": "/projects"
+    },
+    {
+      "host": "/home/spliterash/.gitconfig",
+      "guest": "/home/spliterash/.gitconfig",
+      "readOnly": true
+    },
+    "/home/spliterash/.ssh/known_hosts:/home/spliterash/.ssh/known_hosts:ro"
+  ]
 }
-EOF
-chmod 600 ~/agent-vm/outbound.json
 ```
 
-В `network.nix` тогда вместо всего блока `outbound = { ... }`:
+`*.` в `proxy` означает сам домен и любые поддомены. Что не попало в список,
+идёт напрямую. При пустом списке `outbound` можно оставить `null`.
 
-```nix
-outbound.file = "/home/spliterash/agent-vm/outbound.json";
+`outbound` — любой outbound из
+[документации sing-box](https://sing-box.sagernet.org/configuration/outbound/).
+Поле `tag` писать не надо, оно проставляется автоматически.
+
+Путь `host` в `mounts` может быть каталогом или отдельным файлом, тип определяется
+автоматически. Оба пути должны быть абсолютными; `host` должен существовать на
+хосте до старта VM, а `guest` будет создан внутри неё. Для объектной записи
+`readOnly: true` включает монтирование только для чтения. По умолчанию используется
+режим чтения и записи.
+
+Есть короткий Docker-подобный формат `host:guest[:ro|rw]`:
+
+```json
+{
+  "mounts": [
+    "/home/spliterash/projects:/projects",
+    "/home/spliterash/.gitconfig:/home/spliterash/.gitconfig:ro"
+  ]
+}
 ```
 
-Формат файла — ровно то, что в
-[документации по outbound](https://sing-box.sagernet.org/configuration/outbound/),
-так что тем же способом задаётся не только socks: `vless`, `trojan`,
-`shadowsocks` и остальные пишутся туда как есть.
+Объектные и короткие записи можно смешивать. Если запись одна, массив можно
+опустить и передать объект или строку напрямую. Каталоги подключаются через 9p;
+для отдельного файла создаётся изолированная шара, не открывающая гостю соседние
+файлы из его родительского каталога.
+
+Изменения применяются через:
+
+```sh
+avm restart
+```
+
+Пересборка системы не нужна. Старый `~/agent-vm/proxy.json` можно удалить после
+переноса его содержимого в поле `outbound`.
 
 ## Файлы
 
@@ -155,6 +112,7 @@ outbound.file = "/home/spliterash/agent-vm/outbound.json";
 | | |
 |---|---|
 | `ssh/` | ключ, которым `avm ssh` заходит внутрь |
+| `config.json` | локальные proxy/outbound/mounts, не попадает в git и store |
 | `docker.qcow2` | образы и контейнеры docker |
 | `root.qcow2`, `run/` | директория рута за исключением монтирования |
 
