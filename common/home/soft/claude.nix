@@ -3,6 +3,7 @@ let
   llm = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
 in
 {
+  imports = [ inputs.codex-desktop-linux.homeManagerModules.default ];
   home.packages = [
     llm.claude-code
     llm.codex
@@ -10,4 +11,7 @@ in
     llm.opencode
     pkgs.docker-sbx
   ];
+  programs.codexDesktopLinux = {
+    enable = true;
+  };
 }

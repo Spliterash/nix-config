@@ -183,6 +183,7 @@ in
     home.stateVersion = "26.05";
     imports = [
       ../common/home/shell/zsh.nix
+      ../common/home/shell/aliases.nix
       ../common/home/shell/fzf.nix
       ../common/home/git.nix
       ../common/home/soft/yazi
