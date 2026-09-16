@@ -68,6 +68,7 @@ in
         ".sourcegit"
         ".java"
         ".lmstudio"
+        ".omp"
         "agent-vm"
 
         #? games
