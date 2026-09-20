@@ -5,7 +5,7 @@
   imports = [
     ../../common/home
 
-    # ./soft/ollama.nix
+    ./soft/ollama.nix
     ./mouse.nix
     ./power.nix
   ];
