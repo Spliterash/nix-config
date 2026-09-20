@@ -22,7 +22,7 @@
     ./soft/vscode
     ./soft/wezterm
     ./soft/yazi
-    ./soft/claude.nix
+    ./soft/llm.nix
     ./soft/furryfox
     ./soft/sourcegit.nix
     ./soft/vesktop.nix

@@ -38,11 +38,6 @@
     llm-agents.url = "github:numtide/llm-agents.nix";
     codex-desktop-linux = {
       url = "github:ilysenko/codex-desktop-linux";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    omp = {
-      url = "github:can1357/oh-my-pi";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 

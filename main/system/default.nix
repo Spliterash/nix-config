@@ -6,7 +6,7 @@
     ./hardware-configuration.nix
     ./disk-config.nix
     ./gpu.nix
-    ../../agent/host.nix
+    # ../../agent/host.nix
     # ./powersaving.nix
   ];
 

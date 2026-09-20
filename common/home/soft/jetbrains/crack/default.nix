@@ -30,7 +30,7 @@ let
 
       src = pkgs.fetchurl {
         url = ja-jetfilter-base-url;
-        hash = "sha256-cQc/LU13zDlv7f0ymBg7OBUJ7ISc+/TDrLpubQzAn1o=";
+        hash = "sha256-KyhCP0KKjUQPFSL/ugP+K5FVhJiHMSwLZGfse20IbkY=";
       };
       dontUnpack = true;
 

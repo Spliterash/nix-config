@@ -68,7 +68,8 @@ in
         ".sourcegit"
         ".java"
         ".lmstudio"
-        ".omp"
+        ".pi"
+        ".cocoindex_code"
         "agent-vm"
 
         #? games

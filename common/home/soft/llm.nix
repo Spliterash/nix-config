@@ -5,17 +5,13 @@ in
 {
   imports = [
     inputs.codex-desktop-linux.homeManagerModules.default
-    inputs.omp.homeManagerModules.default
   ];
-  programs.omp = {
-    enable = true;
-    settings.startup.quiet = true;
-  };
   home.packages = [
     llm.claude-code
     llm.codex
-    pkgs.lmstudio
     llm.opencode
+    # Чтобы не ломались плагины
+    (llm.pi.override { useBun = false; })
     pkgs.docker-sbx
   ];
   programs.codexDesktopLinux = {

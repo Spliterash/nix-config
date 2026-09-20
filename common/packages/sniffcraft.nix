@@ -18,7 +18,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://github.com/adepierre/SniffCraft/releases/download/latest/sniffcraft-linux-1.21.11";
-    hash = "sha256-bd0OpEkGCtQ3TbnupDkJln/ZfQfazV2ZcsYXC9jTR+M=";
+    hash = "sha256-HS0+dVQQaGi13tg6YQJVLiPpkVHPuhNJ36IQx3DNkQw=";
   };
 
   dontUnpack = true;
