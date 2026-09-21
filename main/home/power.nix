@@ -18,13 +18,13 @@
       };
     };
 
-    # Монитор НЕ гасить (никакого DPMS) и не приглушать яркость — только чёрная заливка.
+    # Монитор гасить через 15 минут простоя, яркость не приглушать — плюс чёрная заливка локскрина.
     powerdevil.AC = {
-      turnOffDisplay.idleTimeout = "never";
+      turnOffDisplay.idleTimeout = 900; # 15 минут
       dimDisplay.enable = false;
       autoSuspend = {
         action = "shutDown";
-        idleTimeout = 10800;
+        idleTimeout = 21600; # 6 часов
       };
     };
   };
