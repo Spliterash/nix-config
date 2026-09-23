@@ -15,6 +15,8 @@ let
     } "magick ${./icon.png} -resize ${size} png:$out";
 in
 {
+  imports = [ ./cheburnet.nix ];
+
   xdg.dataFile =
     builtins.listToAttrs (
       map (s: {
