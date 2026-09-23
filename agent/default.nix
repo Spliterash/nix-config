@@ -139,13 +139,10 @@ in
     diskImage = "${net.stateDir}/root.qcow2";
     mountHostNixStore = true;
     writableStore = false;
-    #! loose-кэш не видит пути, появившиеся в хостовом store после старта VM
-    nixStore9pCache = "none";
 
     sharedDirectories.agentssh = {
       source = "${net.stateDir}/ssh";
       target = sshShare;
-      securityModel = "none";
     };
 
     fileSystems."/var/lib/docker" = {

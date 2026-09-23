@@ -10,9 +10,9 @@ in
     llm.claude-code
     llm.codex
     llm.opencode
+    llm.omp
     # Чтобы не ломались плагины
     (llm.pi.override { useBun = false; })
-    pkgs.docker-sbx
   ];
   programs.codexDesktopLinux = {
     enable = true;

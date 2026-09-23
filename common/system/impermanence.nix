@@ -69,6 +69,7 @@ in
         ".java"
         ".lmstudio"
         ".pi"
+        ".omp"
         ".cocoindex_code"
         "agent-vm"
 
