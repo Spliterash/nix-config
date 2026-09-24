@@ -1,12 +1,15 @@
 # Agent VM
 
-Виртуалка для LLM-агента. Внутри агент может делать что угодно, наружу ходит
-только через хост: выбранные имена — в SOCKS5, остальное — напрямую.
+Виртуалка для LLM-агента на [microvm.nix](https://github.com/microvm-nix/microvm.nix).
+Внутри агент может делать что угодно. Единственный сетевой интерфейс подключён
+к отдельному network namespace на хосте; sing-box вне VM направляет выбранные
+домены через прокси, остальные — напрямую. Прямого uplink у namespace нет.
+`/nix/store` общий с хостом, сборки уходят в хостовый nix-daemon.
 
 ## Пользоваться
 
 ```sh
-avm start            # поднять и дождаться, пока пустит по SSH
+avm start            # поднять и дождаться загрузки
 avm ssh              # зайти внутрь
 avm ssh htop         # выполнить команду и выйти
 avm stop             # погасить
@@ -18,7 +21,7 @@ avm stop             # погасить
 avm status           # запущена или нет
 avm restart
 avm logs             # консоль VM
-avm logs proxy       # куда уходит трафик
+avm logs proxy       # лог внешнего sing-box
 ```
 
 Есть таб-комплит: `avm <Tab>`. Пароль не спрашивает.
@@ -27,7 +30,7 @@ avm logs proxy       # куда уходит трафик
 
 ## Настроить
 
-Машинные настройки лежат в `~/agent-vm/config.json`, вне репозитория и
+Машинные настройки лежат в `~/agent-vm/config.yml`, вне репозитория и
 `/nix/store`. Команда создаст пустой конфиг с правами `0600` и откроет его в
 `$VISUAL`, `$EDITOR` или `vi`:
 
@@ -39,40 +42,50 @@ avm config
 
 Пример полного конфига:
 
-```json
-{
-  "proxy": [
-    "*.openai.com",
-    "*.anthropic.com"
-  ],
-  "outbound": {
-    "type": "socks",
-    "server": "10.9.8.7",
-    "server_port": 1080,
-    "username": "sekai",
-    "password": "hunter2"
-  },
-  "mounts": [
-    {
-      "host": "/home/spliterash/projects",
-      "guest": "/projects"
-    },
-    {
-      "host": "/home/spliterash/.gitconfig",
-      "guest": "/home/spliterash/.gitconfig",
-      "readOnly": true
-    },
-    "/home/spliterash/.ssh/known_hosts:/home/spliterash/.ssh/known_hosts:ro"
-  ]
-}
+```yaml
+proxy:
+  - "*.openai.com"
+  - "*.anthropic.com"
+outbound:
+  type: socks
+  server: 10.9.8.7
+  server_port: 1080
+  username: sekai
+  password: "hunter2"
+mounts:
+  - host: /home/spliterash/projects
+    guest: /projects
+  - host: /home/spliterash/.gitconfig
+    guest: /home/spliterash/.gitconfig
+    readOnly: true
+  - "/home/spliterash/.ssh/known_hosts:/home/spliterash/.ssh/known_hosts:ro"
 ```
 
 `*.` в `proxy` означает сам домен и любые поддомены. Что не попало в список,
 идёт напрямую. При пустом списке `outbound` можно оставить `null`.
+Значения с ведущим `*` нужно заключать в кавычки. YAML читает готовый `yq`;
+конфиг должен содержать один документ-объект.
 
 `outbound` — любой outbound из
 [документации sing-box](https://sing-box.sagernet.org/configuration/outbound/).
 Поле `tag` писать не надо, оно проставляется автоматически.
+
+Kill switch находится вне VM: namespace содержит только гостевой TAP и TUN
+sing-box, без user-сети qemu, bridge, veth и прямого выхода на хостовую сеть.
+Правила nftables разрешают пересылку только между TAP и TUN. Недоступен
+outbound — домены из списка не открываются, остальные продолжают работать.
+Остановился sing-box или исчез TUN — сетевой доступ пропадает полностью;
+SSH через vsock остаётся доступен. Гостевой root не может снять эти правила.
+Sing-box — дочерний процесс `microvm@agent`, отдельного proxy-сервиса нет.
+
+`domain_suffix` покрывает сам домен и поддомены любой глубины, но не похожие
+имена вроде `notifconfig.me` или `ifconfig.me.example.org`.
+
+Граница защиты: хостовый nix-daemon намеренно сохранён. Сборки и загрузки,
+переданные ему через vsock, используют сеть хоста, обходя эту политику.
+Доменные правила также не являются запретом произвольных туннелей через
+разрешённые direct-адреса. Проброшенные каталоги и SSH-ключи остаются отдельным
+доверием гостю; это не полная изоляция от хоста.
 
 Путь `host` в `mounts` может быть каталогом или отдельным файлом, тип определяется
 автоматически. Оба пути должны быть абсолютными; `host` должен существовать на
@@ -82,53 +95,70 @@ avm config
 
 Есть короткий Docker-подобный формат `host:guest[:ro|rw]`:
 
-```json
-{
-  "mounts": [
-    "/home/spliterash/projects:/projects",
-    "/home/spliterash/.gitconfig:/home/spliterash/.gitconfig:ro"
-  ]
-}
+```yaml
+mounts:
+  - "/home/spliterash/projects:/projects"
+  - "/home/spliterash/.gitconfig:/home/spliterash/.gitconfig:ro"
 ```
 
 Объектные и короткие записи можно смешивать. Если запись одна, массив можно
-опустить и передать объект или строку напрямую. Каталоги подключаются через 9p;
-для отдельного файла создаётся изолированная шара, не открывающая гостю соседние
-файлы из его родительского каталога.
+опустить и передать объект или строку напрямую. Все монтирования bind-ятся на
+хосте в `/run/avm/shares/<n>` и уходят в VM одной virtiofs-шарой; для файла
+соседние файлы из его каталога гостю не видны. Всё, что гость создаёт в шарах
+(в том числе от root), на хосте принадлежит пользователю.
 
-Изменения применяются через:
+Изменения применяются через `avm restart`, пересборка системы не нужна.
 
-```sh
-avm restart
-```
+Проверка формата самостоятельных QCOW2-образов, HTTP/HTTPS, прокси для
+`ifconfig.me`/`www.ifconfig.me` и прямого выхода через ipify, AWS checkip и
+icanhazip: `python3 agent/check.py` из репозитория при запущенной VM.
+В `proxy` должен присутствовать `ifconfig.me` или `*.ifconfig.me`.
 
-Пересборка системы не нужна. Старый `~/agent-vm/proxy.json` можно удалить после
-переноса его содержимого в поле `outbound`.
-
-## Файлы
-
-Всё лежит в `~/agent-vm`:
+## Как устроено
 
 | | |
 |---|---|
-| `ssh/` | ключ, которым `avm ssh` заходит внутрь |
-| `config.json` | локальные proxy/outbound/mounts, не попадает в git и store |
-| `docker.qcow2` | образы и контейнеры docker |
-| `root.qcow2`, `run/` | директория рута за исключением монтирования |
+| `/nix/store` | virtiofs от хоста, read-only; virtiofsd под root ссылается на inode через file handles, а не держит по открытому fd на каждый |
+| nix | `NIX_REMOTE=daemon`, сокет прокинут в хостовый nix-daemon через vsock |
+| ssh | через vsock (`ssh agent`), сетевого порта нет |
+| сеть | TAP в отдельном namespace; у QEMU нет user-mode сети, у namespace нет прямого uplink |
+| прокси | sing-box — дочерний процесс AVM; TUN создаётся только в namespace, сеть хоста не перенастраивается |
 
-Ключ генерится сам при первом `avm start`, в репозитории его нет. Потерялся —
-удали `~/agent-vm/ssh` и запусти снова, сделается новый.
+Юниты на хосте: `microvm@agent`, `microvm-virtiofsd@agent`, `avm-prepare`
+(читает `config.yml`, готовит шары) и `avm-nix-daemon.socket`.
+Sing-box запускается и останавливается вместе с VM; при пустом `proxy`
+он направляет весь трафик напрямую через тот же изолированный шлюз.
 
-Каталог можно переносить целиком: путь задаётся в `network.nix` (`stateDir`).
+## Файлы
+
+| | |
+|---|---|
+| `~/agent-vm/config.yml` | локальные proxy/outbound/mounts, не попадает в git и store |
+| `~/agent-vm/ssh/` | ключ, которым `avm ssh` заходит внутрь |
+| `~/agent-vm/disks/docker.qcow2` | образы и контейнеры docker |
+| `~/agent-vm/disks/root.qcow2` | корень VM (home, кэши, всё вне шар) |
+| `/var/lib/microvms/agent/` | ссылки на сборку, управляющие сокеты и служебные файлы microvm, без дисков |
+
+Ключ генерится сам при первом `avm start`. Потерялся — удали `~/agent-vm/ssh`
+и запусти снова.
+Перед стартом `disks/` bind-монтируется в `/run/avm/disks`, чтобы QEMU под
+пользователем `microvm` не требовал доступа к закрытому домашнему каталогу.
+При остановке bind снимается; образы остаются в `~/agent-vm/disks`.
+
+Используется QCOW2 без backing-файлов: сами файлы образов растут по мере
+записи данных, а не имеют сразу длину виртуального диска. Ёмкость внутри VM
+по умолчанию — 8 ГиБ для корня и 32 ГиБ для Docker. Отсутствующие образы
+создаются и форматируются перед запуском; существующие не пересоздаются.
 
 ## Что переживает перезапуск
 
 | | |
 |---|---|
 | Образы и контейнеры docker | да |
-| Всё остальное внутри VM | нет, корень чистый на каждый старт |
+| Всё остальное внутри VM | да, корень хранится в `root.qcow2` |
 | Скачанное через `nix-shell` / `nix build` | да, попадает в store хоста |
 
 Файлы внутри `mounts` живут на хосте, их VM не трогает.
 
-Docker начать с нуля: `avm stop && rm ~/agent-vm/docker.qcow2`.
+Docker начать с нуля: `avm stop && sudo rm ~/agent-vm/disks/docker.qcow2`,
+корень — то же самое с `root.qcow2`. Удалённый образ создастся заново при старте.

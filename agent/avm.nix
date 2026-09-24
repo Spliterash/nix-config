@@ -5,12 +5,8 @@
   systemd,
   openssh,
   coreutils,
-  jq,
-  unit,
-  sshHost,
-  configFile,
-  configTemplate,
-  mountsJq,
+  yq,
+  vm,
 }:
 let
   cli = writeShellApplication {
@@ -19,93 +15,50 @@ let
       systemd
       openssh
       coreutils
-      jq
+      yq
     ];
     text = ''
       usage() {
         cat <<'EOF'
-      avm start              поднять VM и дождаться SSH
+      avm start              поднять VM и дождаться загрузки
       avm stop               погасить
       avm restart            перезапустить
       avm status             запущена или нет
       avm ssh [команда...]   зайти внутрь; с аргументом — выполнить и выйти
-      avm logs [proxy]       консоль VM; с proxy — лог прокси
+      avm logs [proxy]       консоль VM; с proxy — лог внешнего прокси
       avm config [path]      открыть локальный конфиг или показать его путь
       EOF
       }
 
-      wait_ssh() {
+      wait_boot() {
         local _
         for _ in $(seq 1 90); do
-          if ssh -o BatchMode=yes -o ConnectTimeout=2 ${sshHost} true 2>/dev/null; then
+          if ssh -o BatchMode=yes -o ConnectTimeout=2 ${vm.name} true 2>/dev/null; then
+            ssh ${vm.name} systemctl is-system-running --wait >/dev/null || true
             return 0
           fi
-          systemctl is-active --quiet ${unit} || break
+          systemctl is-active --quiet ${vm.unit} || break
           sleep 1
         done
-        echo "avm: SSH не поднялся, смотри avm logs" >&2
+        echo "avm: VM не поднялась, смотри avm logs" >&2
         return 1
-      }
-
-      mount_shares() {
-        [[ -f ${configFile} ]] || return 0
-
-        local i=0 mount host guest read_only kind tag options command
-        local parent staging source
-        while IFS= read -r mount; do
-          host=$(jq -r '.host' <<<"$mount")
-          guest=$(jq -r '.guest' <<<"$mount")
-          read_only=$(jq -r '.readOnly' <<<"$mount")
-
-          if [[ -d $host ]]; then
-            kind='directory'
-          elif [[ -f $host ]]; then
-            kind='file'
-          else
-            echo "avm: mount[$i].host не является файлом или каталогом: $host" >&2
-            return 1
-          fi
-
-          tag="avm$i"
-          options=trans=virtio,version=9p2000.L,msize=16384
-          [[ $read_only == true ]] && options+=,ro
-
-          if [[ $kind == directory ]]; then
-            printf -v command \
-              'sudo mkdir -p -- %q && { sudo mountpoint -q -- %q || sudo mount -t 9p -o %q %q %q; }' \
-              "$guest" "$guest" "$options" "$tag" "$guest"
-          else
-            parent=''${guest%/*}
-            [[ -n $parent ]] || parent=/
-            staging="/run/avm-mounts/$tag"
-            source="$staging/source"
-            printf -v command \
-              'sudo mkdir -p -- %q %q && { sudo mountpoint -q -- %q || sudo mount -t 9p -o %q %q %q; } && { sudo test -e %q || sudo touch -- %q; } && { sudo mountpoint -q -- %q || sudo mount --bind %q %q; }' \
-              "$parent" "$staging" "$staging" "$options" "$tag" "$staging" \
-              "$guest" "$guest" "$guest" "$source" "$guest"
-          fi
-
-          # shellcheck disable=SC2029
-          ssh -n ${sshHost} "$command"
-          i=$((i + 1))
-        done < <(jq -c '${mountsJq} | .[]' ${configFile})
       }
 
       edit_config() {
         local editor
         local -a editor_cmd
 
-        mkdir -p "$(dirname ${configFile})"
-        if [[ ! -e ${configFile} ]]; then
-          install -m 600 ${configTemplate} ${configFile}
+        mkdir -p "$(dirname ${vm.configFile})"
+        if [[ ! -e ${vm.configFile} ]]; then
+          (umask 077 && printf '%s\n' 'proxy: []' 'outbound: null' 'mounts: []' >${vm.configFile})
         fi
-        chmod 600 ${configFile}
+        chmod 600 ${vm.configFile}
 
         editor=''${VISUAL:-''${EDITOR:-vi}}
         read -r -a editor_cmd <<<"$editor"
-        "''${editor_cmd[@]}" ${configFile}
-        jq empty ${configFile} >/dev/null || {
-          echo "avm: ${configFile} содержит некорректный JSON" >&2
+        "''${editor_cmd[@]}" ${vm.configFile}
+        yq -e -s 'length == 1 and (.[0] | type == "object")' ${vm.configFile} >/dev/null || {
+          echo "avm: ${vm.configFile} должен содержать один YAML-объект" >&2
           return 1
         }
       }
@@ -115,31 +68,29 @@ let
 
       case $cmd in
         start)
-          systemctl start ${unit}
-          wait_ssh
-          mount_shares
+          systemctl start ${vm.unit}
+          wait_boot
           ;;
-        stop) systemctl stop ${unit} ;;
+        stop) systemctl stop ${vm.unit} ;;
         restart)
-          systemctl restart ${unit}
-          wait_ssh
-          mount_shares
+          systemctl restart ${vm.unit}
+          wait_boot
           ;;
-        status) systemctl status ${unit} --no-pager ;;
+        status) systemctl status ${vm.unit} --no-pager ;;
         ssh)
           # shellcheck disable=SC2029
-          ssh ${sshHost} "$@"
+          ssh ${vm.name} "$@"
           ;;
         logs)
           if [[ ''${1:-} == proxy ]]; then
-            journalctl -u sing-box -f
+            journalctl -u ${vm.unit} -t avm-proxy -f
           else
-            journalctl -u ${unit} -f
+            journalctl -u ${vm.unit} -f
           fi
           ;;
         config)
           if [[ ''${1:-} == path ]]; then
-            printf '%s\n' ${configFile}
+            printf '%s\n' ${vm.configFile}
           elif (( $# == 0 )); then
             edit_config
           else
@@ -165,7 +116,7 @@ let
 
       local -a cmds
       cmds=(
-        'start:поднять VM и дождаться SSH'
+        'start:поднять VM и дождаться загрузки'
         'stop:погасить'
         'restart:перезапустить'
         'status:запущена или нет'

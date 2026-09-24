@@ -36,6 +36,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     llm-agents.url = "github:numtide/llm-agents.nix";
+    microvm = {
+      url = "github:microvm-nix/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     codex-desktop-linux = {
       url = "github:ilysenko/codex-desktop-linux";
     };
@@ -91,14 +95,6 @@
 
       nixosConfigurations.main = mkHost "main";
       nixosConfigurations.laptop = mkHost "laptop";
-      nixosConfigurations.agent = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          inherit inputs system;
-        }
-        // settings;
-        modules = [ ./agent ];
-      };
 
       #? Залупа чтобы работал лангуаге сервер в хом менеджере
       homeConfigurations.nixd = inputs.home-manager.lib.homeManagerConfiguration {

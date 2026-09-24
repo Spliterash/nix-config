@@ -71,7 +71,6 @@ in
         ".pi"
         ".omp"
         ".cocoindex_code"
-        "agent-vm"
 
         #? games
         ".steam"
@@ -97,6 +96,8 @@ in
         ".jdks"
         ".npm"
         ".pki"
+
+        "agent-vm"
       ];
     };
   };

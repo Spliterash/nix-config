@@ -1,7 +1,7 @@
 {
+  config,
   lib,
   pkgs,
-  modulesPath,
   inputs,
   username,
   system,
@@ -10,42 +10,123 @@
 }@allInputs:
 let
   llm = inputs.llm-agents.packages.${system};
-  net = import ./network.nix allInputs;
-  #! ключ генерит хост при первом старте и отдаёт сюда шарой, поэтому в
-  #! репозитории его нет; sshd со StrictModes требует совпадения uid с хостом
-  sshShare = "/mnt/agent-ssh";
+  vm = import ./vm.nix allInputs;
 in
 {
   imports = [
-    "${modulesPath}/virtualisation/qemu-vm.nix"
     inputs.home-manager.nixosModules.home-manager
     ../common/system/nix.nix
     ../common/system/dev-tools.nix
     ../common/system/nix-ld.nix
   ];
 
-  nixpkgs.config.allowUnfree = true;
   system.stateVersion = "26.05";
 
-  networking = {
-    hostName = "agent";
-    useDHCP = false;
-    #! единственный NIC — предсказуемые имена только мешают
-    usePredictableInterfaceNames = false;
-    interfaces.eth0.ipv4.addresses = [
+  microvm = {
+    hypervisor = "qemu";
+    vcpu = 4;
+    mem = 8192;
+
+    vsock.cid = vm.vsockCid;
+    vsock.ssh.enable = true;
+
+    interfaces = [ ];
+    qemu.extraArgs = [
+      "-netdev"
+      "tap,id=eth0,ifname=guest0,script=no,downscript=no"
+      "-device"
+      "virtio-net-pci,netdev=eth0,mac=02:00:00:00:42:42"
+      # microvm.nix задаёт format=raw для QEMU; -set меняет его до открытия дисков.
+      "-set"
+      "drive.vda.format=qcow2"
+      "-set"
+      "drive.vdb.format=qcow2"
+    ];
+
+    shares = [
       {
-        address = net.guest;
-        inherit (net) prefixLength;
+        proto = "virtiofs";
+        tag = "ro-store";
+        source = "/nix/store";
+        mountPoint = "/nix/.ro-store";
+        cache = "always";
+      }
+      {
+        proto = "virtiofs";
+        tag = "avm-host";
+        source = vm.hostDir;
+        mountPoint = vm.hostDir;
+        readOnly = true;
+      }
+      {
+        proto = "virtiofs";
+        tag = "avm-shares";
+        source = vm.sharesDir;
+        mountPoint = vm.sharesDir;
+        posixAcl = false;
+        #! virtiofsd работает от root: всё, что создаёт гость (в том числе его
+        #! root), на хосте принадлежит пользователю, а устройства создать нельзя
+        extraArgs = [
+          "--translate-uid=squash-guest:0:1000:4294967295"
+          "--translate-gid=squash-guest:0:100:4294967295"
+          "--modcaps=-mknod"
+        ];
       }
     ];
-    defaultGateway = {
-      address = net.gateway;
-      interface = "eth0";
-    };
-    #! резолвера на шлюзе нет, DNS перехватывает sing-box на хосте
-    nameservers = [ "1.1.1.1" ];
-    firewall.allowedTCPPorts = [ 22 ];
+
+    preStart = lib.concatMapStringsSep "\n" (volume: ''
+      if [ ! -e ${lib.escapeShellArg volume.image} ]; then
+        (
+          export PATH=${
+            lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.e2fsprogs
+              config.microvm.qemu.package
+            ]
+          }:$PATH
+          umask 022
+          tmp=$(mktemp -d ${vm.disksDir}/.create-XXXXXX)
+          trap 'rm -rf "$tmp"' EXIT
+          truncate -s ${toString volume.size}M "$tmp/disk.raw"
+          mkfs.ext4 -q "$tmp/disk.raw"
+          qemu-img convert -f raw -O qcow2 "$tmp/disk.raw" "$tmp/disk.qcow2"
+          mv "$tmp/disk.qcow2" ${lib.escapeShellArg volume.image}
+        )
+      fi
+    '') config.microvm.volumes;
+
+    volumes = [
+      {
+        image = "${vm.disksDir}/root.qcow2";
+        imageType = "qcow2";
+        autoCreate = false;
+        mountPoint = "/";
+        size = 8192;
+      }
+      {
+        image = "${vm.disksDir}/docker.qcow2";
+        imageType = "qcow2";
+        autoCreate = false;
+        mountPoint = "/var/lib/docker";
+        size = 32768;
+      }
+    ];
   };
+
+  networking.hostName = vm.name;
+  networking.useDHCP = false;
+  networking.usePredictableInterfaceNames = false;
+  networking.interfaces.eth0.ipv4.addresses = [
+    {
+      address = vm.guest;
+      prefixLength = 30;
+    }
+  ];
+  networking.defaultGateway = {
+    address = vm.gateway;
+    interface = "eth0";
+  };
+  networking.nameservers = [ "1.1.1.1" ];
 
   programs.zsh = {
     enable = true;
@@ -76,94 +157,70 @@ in
 
   services.openssh = {
     enable = true;
+    #! слушает только vsock (sshd-vsock.socket от systemd-ssh-generator)
+    openFirewall = false;
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
     };
-    authorizedKeysFiles = lib.mkForce [ "${sshShare}/id_ed25519.pub" ];
+    authorizedKeysFiles = lib.mkForce [ "${vm.hostDir}/authorized_keys" ];
   };
 
   virtualisation.docker = {
     enable = true;
     storageDriver = "overlay2";
   };
-  systemd.services.docker.unitConfig.RequiresMountsFor = "/var/lib/docker";
 
-  #! билды уходят в хостовый демон через socat, свой демон только мешал бы
-  systemd.services.nix-daemon.enable = false;
-  systemd.sockets.nix-daemon.enable = false;
-
-  #! сокет-активация, а не просто сервис: активация home-manager первым делом
-  #! дёргает nix-build, и ей нужна гарантия, что сокет уже слушает, а не что
-  #! процесс-прокси «запущен»
-  systemd.tmpfiles.rules = [ "d /nix/var/nix/daemon-socket 0755 root root -" ];
-
-  systemd.sockets.agent-nix-daemon = {
-    description = "Socket of the host nix-daemon";
+  #! своего nix-daemon нет (store read-only), сборки уходят в хостовый через vsock
+  systemd.sockets.host-nix-daemon = {
     wantedBy = [ "sockets.target" ];
     socketConfig = {
       ListenStream = "/nix/var/nix/daemon-socket/socket";
       SocketMode = "0666";
+      Accept = true;
     };
   };
-
-  systemd.services.agent-nix-daemon = {
-    description = "Forward the nix-daemon socket to the host";
-    requires = [ "agent-nix-daemon.socket" ];
-    wants = [ "network-online.target" ];
-    after = [
-      "agent-nix-daemon.socket"
-      "network-online.target"
-    ];
-    serviceConfig.ExecStart = "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd ${net.gateway}:${toString net.nixDaemonPort}";
+  systemd.services."host-nix-daemon@".serviceConfig = {
+    ExecStart = "${lib.getExe pkgs.socat} STDIO VSOCK-CONNECT:2:${toString vm.nixDaemonPort}";
+    StandardInput = "socket";
   };
 
   systemd.services."home-manager-${username}" = {
-    wants = [
-      "agent-nix-daemon.socket"
-      "network-online.target"
-    ];
-    after = [
-      "agent-nix-daemon.socket"
-      "network-online.target"
-    ];
+    wants = [ "host-nix-daemon.socket" ];
+    after = [ "host-nix-daemon.socket" ];
   };
 
-  virtualisation = {
-    graphics = false;
-    cores = 4;
-    memorySize = 8192;
-    diskSize = 4096;
-    #! пересоздаётся на каждый старт в ExecStartPre agent-vm.service
-    diskImage = "${net.stateDir}/root.qcow2";
-    mountHostNixStore = true;
-    writableStore = false;
-
-    sharedDirectories.agentssh = {
-      source = "${net.stateDir}/ssh";
-      target = sshShare;
-    };
-
-    fileSystems."/var/lib/docker" = {
-      device = "/dev/disk/by-id/virtio-docker";
-      fsType = "ext4";
-      autoFormat = true;
-    };
-
-    qemu.networkingOptions = lib.mkForce [
-      "-netdev tap,id=net0,ifname=tap-agent,script=no,downscript=no"
-      "-device virtio-net-pci,netdev=net0"
+  #! список монтирований готовит хост (avm-prepare), здесь только bind на место
+  systemd.services.avm-mounts = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "home-manager-${username}.service" ];
+    unitConfig.RequiresMountsFor = [
+      vm.hostDir
+      vm.sharesDir
     ];
-
-    qemu.drives = [
-      {
-        name = "docker";
-        file = "${net.stateDir}/docker.qcow2";
-        driveExtraOpts.format = "qcow2";
-        deviceExtraOpts.serial = "docker";
-      }
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [
+      pkgs.jq
+      pkgs.util-linux
     ];
+    script = ''
+      jq -r '.[]' ${vm.hostDir}/mounts.json |
+        { i=0; while read -r guest; do
+          source=${vm.sharesDir}/$i
+          if [ -d "$source" ]; then
+            mkdir -p "$guest"
+          else
+            mkdir -p "$(dirname "$guest")"
+            [ -e "$guest" ] || touch "$guest"
+          fi
+          mount --bind "$source" "$guest"
+          i=$((i + 1))
+        done; }
+    '';
   };
 
   home-manager.useGlobalPkgs = true;
@@ -188,7 +245,7 @@ in
     ];
     #! в госте нет чекаута флейка, на который смотрит mkOutOfStoreSymlink
     xdg.configFile."shell/".source = lib.mkForce ../common/home/shell/scripts;
-    #! compaudit обходит completion-каталоги в /nix/store через медленный 9p
+    #! compaudit обходит все completion-каталоги в /nix/store, а он на общей FS
     programs.zsh.completionInit = "autoload -U compinit && compinit -C";
     home.packages = [
       llm.claude-code
