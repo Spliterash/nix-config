@@ -36,24 +36,31 @@ ffmp4() {
         ''|*[!0-9]*|0) echo "ffmp4: -a должен быть числом начиная с 1" >&2; return 1 ;;
     esac
 
-    local -a rc
-    if [ -n "$bitrate" ]; then
-        rc=(-rc_mode VBR -b:v "$bitrate" -maxrate "$bitrate")
+    local dimensions width height
+    dimensions=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0:s=x "$input") || return
+    width=${dimensions%x*} height=${dimensions#*x}
+
+    local -a input_opts video_opts rc
+    if [[ "$dimensions" == *x* ]] && (( width < 128 || height < 128 )); then
+        video_opts=(-vf 'scale=trunc(iw/2)*2:trunc(ih/2)*2' -c:v libx264 -profile:v high -g 50)
+        if [ -n "$bitrate" ]; then
+            rc=(-b:v "$bitrate")
+        else
+            rc=(-crf "$qp")
+        fi
     else
-        rc=(-rc_mode CQP -qp "$qp")
+        input_opts=(-init_hw_device vaapi=drm128:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device drm128)
+        video_opts=(-vf 'format=nv12|vaapi,hwupload,scale_vaapi=w=trunc(iw/2)*2:h=trunc(ih/2)*2' -c:v h264_vaapi -profile:v high -g 50)
+        if [ -n "$bitrate" ]; then
+            rc=(-rc_mode VBR -b:v "$bitrate" -maxrate "$bitrate")
+        else
+            rc=(-rc_mode CQP -qp "$qp")
+        fi
     fi
 
-    ffmpeg -init_hw_device vaapi=drm128:/dev/dri/renderD128 \
-           -hwaccel vaapi \
-           -hwaccel_output_format vaapi \
-           -hwaccel_device drm128 \
-           -i "$input" \
-           -vf "format=nv12|vaapi,hwupload,scale_vaapi=w=trunc(iw/2)*2:h=trunc(ih/2)*2" \
+    ffmpeg "${input_opts[@]}" -i "$input" \
            -map 0:v:0 -map "0:a:$((atrack - 1))?" \
-           -c:v h264_vaapi \
-           -profile:v high \
-           -g 50 \
-           "${rc[@]}" \
+           "${video_opts[@]}" "${rc[@]}" \
            -c:a aac -b:a 192k -ac 2 -ar 48000 \
            -movflags +faststart \
            "$@" \
