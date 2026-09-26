@@ -1,4 +1,6 @@
 {
+  imports = [ ./telegram-priority ];
+
   services.easyeffects.enable = true;
   services.easyeffects.extraPresets = {
     LoudnessEqualizer = builtins.fromJSON (
