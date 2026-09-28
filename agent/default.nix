@@ -204,13 +204,23 @@ in
       RemainAfterExit = true;
     };
     path = [
-      pkgs.jq
+      pkgs.coreutils
       pkgs.util-linux
     ];
+    #! повторный запуск (avm reload) снимает и ставит только изменившиеся записи
     script = ''
-      jq -r '.[]' ${vm.hostDir}/mounts.json |
-        { i=0; while read -r guest; do
-          source=${vm.sharesDir}/$i
+      state=/run/avm-mounts.tsv
+      touch $state
+      sort -u ${vm.hostDir}/mounts.tsv >$state.new
+
+      comm -23 $state $state.new | sort -t$'\t' -k2,2r |
+        while IFS=$'\t' read -r name guest; do
+          umount -l "$guest" || true
+        done
+
+      comm -13 $state $state.new | sort -t$'\t' -k2,2 |
+        while IFS=$'\t' read -r name guest; do
+          source=${vm.sharesDir}/$name
           if [ -d "$source" ]; then
             mkdir -p "$guest"
           else
@@ -218,9 +228,11 @@ in
             [ -e "$guest" ] || touch "$guest"
           fi
           mount --bind "$source" "$guest"
-          i=$((i + 1))
-        done; }
+        done
+
+      mv $state.new $state
     '';
+    reload = config.systemd.services.avm-mounts.script;
   };
 
   home-manager.useGlobalPkgs = true;

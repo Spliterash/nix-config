@@ -23,6 +23,7 @@ let
       avm start              поднять VM и дождаться загрузки
       avm stop               погасить
       avm restart            перезапустить
+      avm reload             применить mounts из конфига без перезапуска
       avm status             запущена или нет
       avm ssh [команда...]   зайти внутрь; с аргументом — выполнить и выйти
       avm logs [proxy]       консоль VM; с proxy — лог внешнего прокси
@@ -35,6 +36,10 @@ let
         for _ in $(seq 1 90); do
           if ssh -o BatchMode=yes -o ConnectTimeout=2 ${vm.name} true 2>/dev/null; then
             ssh ${vm.name} systemctl is-system-running --wait >/dev/null || true
+            if ! ssh ${vm.name} systemctl is-active --quiet avm-mounts; then
+              echo "avm: монтирования не поднялись, смотри avm ssh sudo journalctl -u avm-mounts -b" >&2
+              return 1
+            fi
             return 0
           fi
           systemctl is-active --quiet ${vm.unit} || break
@@ -75,6 +80,10 @@ let
         restart)
           systemctl restart ${vm.unit}
           wait_boot
+          ;;
+        reload)
+          systemctl reload avm-prepare.service
+          ssh ${vm.name} sudo systemctl reload-or-restart avm-mounts
           ;;
         status) systemctl status ${vm.unit} --no-pager ;;
         ssh)
@@ -119,6 +128,7 @@ let
         'start:поднять VM и дождаться загрузки'
         'stop:погасить'
         'restart:перезапустить'
+        'reload:применить mounts без перезапуска'
         'status:запущена или нет'
         'ssh:зайти внутрь или выполнить команду'
         'logs:консоль VM или лог прокси'

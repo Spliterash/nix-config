@@ -14,7 +14,31 @@ def address(url, *, guest=False):
     return ipaddress.ip_address(subprocess.check_output(command, text=True).strip())
 
 
+def check_mounts():
+    subprocess.run(["avm", "ssh", "sudo bash -se"], check=True, input=r'''
+systemctl is-active --quiet avm-mounts
+while IFS=$'\t' read -r name guest; do
+    stat -- "/run/avm/shares/$name" >/dev/null
+    mountpoint -q -- "$guest"
+    if [[ $name == *:ro ]]; then
+        if [[ -d $guest ]]; then
+            if probe=$(mktemp "$guest/.avm-ro-check.XXXXXX" 2>/dev/null); then
+                rm -- "$probe"
+                echo "read-only mount is writable: $guest" >&2
+                exit 1
+            fi
+        elif (: >>"$guest") 2>/dev/null; then
+            echo "read-only mount is writable: $guest" >&2
+            exit 1
+        fi
+    fi
+    printf 'mount: %s\n' "$guest"
+done </run/avm/host/mounts.tsv
+''', text=True)
+
+
 def main():
+    check_mounts()
     for name in ["root", "docker"]:
         disk = Path.home() / "agent-vm" / "disks" / f"{name}.qcow2"
         with disk.open("rb") as image:

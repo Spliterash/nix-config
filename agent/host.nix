@@ -45,6 +45,51 @@ let
           then . else error("некорректный config.yml") end
       ' >/run/avm/config.json
 
+      #! имя шары стабильно (путь + режим), поэтому повторный запуск на живой VM
+      #! только добавляет новые и снимает исчезнувшие, не трогая остальные
+      #! virtiofsd не декодирует escape-последовательности в mountinfo; имя — hex без спецсимволов
+      sync_mounts() {
+        local -A want=()
+        local host read_only guest name target mode
+        while IFS=$'\t' read -r host read_only guest; do
+          name=$(printf '%s' "$host" | sha256sum)
+          name=''${name%% *}
+          [[ $read_only == false ]] || name+=:ro
+          printf '%s\t%s\n' "$name" "$guest"
+          [[ -z ''${want[$name]:-} ]] || continue
+          want[$name]=1
+          target=${vm.sharesDir}/$name
+          ! mountpoint -q "$target" || continue
+          #! файл отдаётся через bind на файл внутри шары, соседи по каталогу гостю не видны
+          if [[ -d $host ]]; then
+            mkdir -p "$target"
+          elif [[ -f $host ]]; then
+            touch "$target"
+          else
+            echo "avm: mounts: host не существует: $host" >&2
+            exit 1
+          fi
+          mode=rw
+          [[ $read_only == false ]] || mode=ro
+          #! ro ставится до публикации mount: отдельный remount не доходит в namespace virtiofsd
+          mount --bind -o "$mode" "$host" "$target"
+        done < <(jq -r '.mounts[] | [.host, .readOnly // false, .guest] | @tsv' /run/avm/config.json) \
+          >${vm.hostDir}/mounts.tsv
+
+        shopt -s nullglob
+        for target in ${vm.sharesDir}/*; do
+          [[ -z ''${want[''${target##*/}]:-} ]] || continue
+          if mountpoint -q "$target"; then umount -l "$target"; fi
+          if [[ -d $target ]]; then rmdir "$target"; else rm "$target"; fi
+        done
+      }
+
+      if [[ ''${1:-} == mounts ]]; then
+        sync_mounts
+        rm /run/avm/config.json
+        exit
+      fi
+
       install -d -o ${username} -m 700 "$(dirname ${vm.sshKey})"
       [[ -f ${vm.sshKey} ]] ||
         runuser -u ${username} -- ssh-keygen -q -t ed25519 -N "" -C avm -f ${vm.sshKey}
@@ -55,23 +100,7 @@ let
       mount --bind ${vm.stateDir}/disks ${vm.disksDir}
       install -m 644 ${vm.sshKey}.pub ${vm.hostDir}/authorized_keys
 
-      #! файл отдаётся через bind на файл внутри шары, соседи по каталогу гостю не видны
-      i=0
-      while IFS=$'\t' read -r host read_only; do
-        target=${vm.sharesDir}/$i
-        if [[ -d $host ]]; then
-          mkdir "$target"
-        elif [[ -f $host ]]; then
-          touch "$target"
-        else
-          echo "avm: mounts[$i].host не существует: $host" >&2
-          exit 1
-        fi
-        mount --bind "$host" "$target"
-        [[ $read_only == false ]] || mount -o remount,bind,ro "$target"
-        i=$((i + 1))
-      done < <(jq -r '.mounts[] | [.host, .readOnly // false] | @tsv' /run/avm/config.json)
-      jq '[.mounts[].guest]' /run/avm/config.json >${vm.hostDir}/mounts.json
+      sync_mounts
 
       #! proxy.json с секретами читает только root, гостю конфиг не отдаём
       (umask 077 && jq --slurpfile p /run/avm/config.json '
@@ -128,6 +157,7 @@ in
         "${lib.getExe' pkgs.coreutils "install"} -d -m 711 /run/avm"
       ];
       ExecStart = lib.getExe prepare;
+      ExecReload = "${lib.getExe prepare} mounts";
       ExecStopPost = cleanup;
     };
   };
@@ -156,11 +186,12 @@ in
 
   environment.systemPackages = [ avm ];
 
-  #! чтобы avm start/stop не спрашивал пароль; правило только про этот юнит
+  #! чтобы avm start/stop/reload не спрашивал пароль; правило только про эти юниты
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
       if (action.id == "org.freedesktop.systemd1.manage-units" &&
-          action.lookup("unit") == "${vm.unit}" &&
+          (action.lookup("unit") == "${vm.unit}" ||
+           action.lookup("unit") == "avm-prepare.service" && action.lookup("verb") == "reload") &&
           subject.isInGroup("wheel")) {
         return polkit.Result.YES;
       }
