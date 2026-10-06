@@ -6,4 +6,5 @@
     (callPackage ../../packages/sniffcraft.nix { })
     atlas
   ];
+  programs.libreoffice.enable = true;
 }

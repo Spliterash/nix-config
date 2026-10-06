@@ -148,7 +148,7 @@ EOF
     local ans
     read "ans?Отключить парольный вход на '$name'? Убедись, что заходишь по ключу! [y/N] "
     if [[ ${ans:l} == y* ]]; then
-        if ssh -t "$name" "echo 'PasswordAuthentication no' | sudo tee /etc/ssh/sshd_config.d/99-disable-password.conf && sudo service ssh restart"; then
+        if ssh -t "$name" "echo 'PasswordAuthentication no' | sudo tee /etc/ssh/sshd_config.d/00-disable-password.conf && sudo service ssh restart"; then
             echo ":: парольный вход отключён"
         else
             echo "sshi: не удалось отключить пароль" >&2
