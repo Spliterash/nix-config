@@ -135,6 +135,8 @@ in
   environment.shells = [ pkgs.zsh ];
   environment.variables.NIX_REMOTE = "daemon";
 
+  nix.settings.nix-path = [ "nixpkgs=${inputs.nixpkgs}" ];
+
   environment.systemPackages = with pkgs; [
     ffmpeg
     git

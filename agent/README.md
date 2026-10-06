@@ -29,6 +29,10 @@ avm logs proxy       # лог внешнего sing-box
 
 Сама по себе виртуалка не стартует — только руками.
 
+В госте `nix-shell` использует `nixpkgs` из закреплённого input flake через
+`nix.settings.nix-path`, без channels. Для `ping`: `nix-shell -p iputils`.
+Изменение этого параметра требует обновления сборки VM; `avm reload` его не применяет.
+
 ## Настроить
 
 Машинные настройки лежат в `~/agent-vm/config.yml`, вне репозитория и
