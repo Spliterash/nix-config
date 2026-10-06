@@ -144,6 +144,27 @@ sudo nixos-install --flake .#<имя> --root /mnt
 (`/home/<юзер>/config`) — склонируй репозиторий именно туда, чтобы работали
 `nh os switch`/`nh os build` без флагов.
 
+## Подпись коммитов GPG
+
+На `main` и `laptop` Home Manager устанавливает GnuPG и gpg-agent с Qt-запросом
+пароля, включает подпись коммитов и тегов. Ключ выбирается по email из Git-конфига.
+Настройки подписи находятся в `common/home/git.nix` и применяются при включённом
+`programs.gpg.enable`; в агентской VM GnuPG выключен.
+
+После `nh os switch` импортируй приватный ключ через `gpg --import /путь/к/key.asc`
+или создай новый с парольной фразой:
+
+```bash
+gpg --quick-generate-key 'Spliterash <me@spliterash.ru>' ed25519 sign 2y
+gpg --armor --export me@spliterash.ru
+```
+
+Публичный ключ добавь в GitHub → Settings → SSH and GPG keys → New GPG key;
+email ключа должен быть подтверждён в аккаунте. Пока приватного ключа нет,
+подписанные коммиты не создаются. `~/.gnupg` сохраняется в `/persistent` с правами
+`0700`; приватный ключ и сертификат отзыва резервируй отдельно, не клади в Git
+или Nix store. Проверка подписи последнего коммита: `git verify-commit HEAD`.
+
 ## Установка по сети с main (nixos-anywhere) — как реально ставился laptop
 
 `laptop` ставился не локально, а удалённо с `main`: система собирается на
