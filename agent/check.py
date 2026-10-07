@@ -1,5 +1,6 @@
 import ipaddress
 import shlex
+import socket
 import subprocess
 from pathlib import Path
 
@@ -37,8 +38,31 @@ done </run/avm/host/mounts.tsv
 ''', text=True)
 
 
+def check_signing():
+    with socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM) as client:
+        client.settimeout(5)
+        client.connect((1, 54546))  # VMADDR_CID_LOCAL: хост не должен получать GPG-сокет VM.
+        try:
+            reply = client.recv(1)
+        except ConnectionResetError:
+            reply = b""
+        assert reply == b"", "GPG bridge accepted a connection from the host"
+    for key in ["user.name", "user.email", "user.signingkey"]:
+        host = subprocess.check_output(["git", "config", "--global", key], text=True).strip()
+        guest = subprocess.check_output(["avm", "ssh", "git", "config", "--global", key], text=True).strip()
+        assert guest == host, (key, host, guest)
+    subprocess.run(["avm", "ssh", "bash -se"], check=True, input=r'''
+repo=$(mktemp -d)
+trap 'rm -rf "$repo"' EXIT
+git init -q "$repo"
+git -C "$repo" commit --allow-empty -m 'AVM GPG signing check'
+git -C "$repo" verify-commit HEAD
+''', text=True)
+
+
 def main():
     check_mounts()
+    check_signing()
     for name in ["root", "docker"]:
         disk = Path.home() / "agent-vm" / "disks" / f"{name}.qcow2"
         with disk.open("rb") as image:

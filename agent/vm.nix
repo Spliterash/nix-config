@@ -5,6 +5,7 @@ rec {
 
   vsockCid = 4242;
   nixDaemonPort = 54545;
+  gpgAgentPort = 54546;
 
   # ssh-ключ, config.yml и диски VM; disks bind-монтируется в /run/avm/disks
   stateDir = "/home/${username}/agent-vm";

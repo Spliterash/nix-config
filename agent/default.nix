@@ -101,7 +101,7 @@ in
         imageType = "qcow2";
         autoCreate = false;
         mountPoint = "/";
-        size = 8192;
+        size = 102400;
       }
       {
         image = "${vm.disksDir}/docker.qcow2";
@@ -257,6 +257,24 @@ in
       ../common/home/soft/yazi
       ../common/home/dev-tools.nix
     ];
+    programs.gpg = {
+      enable = true;
+      settings.no-autostart = true;
+      publicKeys = [ { source = "${vm.hostDir}/gpg-public-keys"; } ];
+    };
+    systemd.user.sockets.host-gpg-agent = {
+      Socket = {
+        ListenStream = "%t/gnupg/S.gpg-agent";
+        SocketMode = "0600";
+        DirectoryMode = "0700";
+        Accept = true;
+      };
+      Install.WantedBy = [ "sockets.target" ];
+    };
+    systemd.user.services."host-gpg-agent@".Service = {
+      ExecStart = "${lib.getExe pkgs.socat} STDIO VSOCK-CONNECT:2:${toString vm.gpgAgentPort}";
+      StandardInput = "socket";
+    };
     #! в госте нет чекаута флейка, на который смотрит mkOutOfStoreSymlink
     xdg.configFile."shell/".source = lib.mkForce ../common/home/shell/scripts;
     #! compaudit обходит все completion-каталоги в /nix/store, а он на общей FS

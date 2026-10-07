@@ -99,6 +99,8 @@ let
       install -d -m 755 ${vm.disksDir}
       mount --bind ${vm.stateDir}/disks ${vm.disksDir}
       install -m 644 ${vm.sshKey}.pub ${vm.hostDir}/authorized_keys
+      runuser -u ${username} -- ${pkgs.gnupg}/bin/gpg --batch --export >${vm.hostDir}/gpg-public-keys
+      chmod 644 ${vm.hostDir}/gpg-public-keys
 
       sync_mounts
 
@@ -182,6 +184,37 @@ in
     #! под этим uid хостовый демон и увидит сборки гостя
     User = username;
     ExecStart = "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd /nix/var/nix/daemon-socket/socket";
+  };
+
+  home-manager.users.${username} = {
+    services.gpg-agent.enableExtraSocket = true;
+    systemd.user.services.gpg-agent.Unit = {
+      Requires = lib.mkForce [
+        "gpg-agent.socket"
+        "gpg-agent-extra.socket"
+      ];
+      After = lib.mkForce [
+        "gpg-agent.socket"
+        "gpg-agent-extra.socket"
+      ];
+    };
+    systemd.user.sockets.avm-gpg-agent = {
+      Unit = {
+        Requires = [ "gpg-agent-extra.socket" ];
+        After = [ "gpg-agent-extra.socket" ];
+      };
+      Socket = {
+        ListenStream = "vsock::${toString vm.gpgAgentPort}";
+        Accept = true;
+      };
+      Install.WantedBy = [ "sockets.target" ];
+    };
+    systemd.user.services."avm-gpg-agent@".Service = {
+      #! vsock не проверяет uid: не даём другим пользователям хоста доступ к ключам.
+      ExecStartPre = "${pkgs.python3}/bin/python3 -c 'import socket, sys; sys.exit(socket.socket(fileno=0).getpeername()[0] != ${toString vm.vsockCid})'";
+      ExecStart = "${lib.getExe pkgs.socat} STDIO UNIX-CONNECT:%t/gnupg/S.gpg-agent.extra";
+      StandardInput = "socket";
+    };
   };
 
   environment.systemPackages = [ avm ];

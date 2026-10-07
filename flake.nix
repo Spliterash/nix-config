@@ -22,6 +22,7 @@
     };
     freesmlauncher = {
       url = "github:FreesmTeam/FreesmLauncher";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     disko = {
       url = "github:nix-community/disko";
