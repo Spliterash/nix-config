@@ -11,7 +11,7 @@
 common/              — общее для всех хостов
   system/            — системные NixOS-модули (вкл. nix.nix, impermanence.nix)
   home/              — home-manager конфиг (общий)
-  packages/          — кастомные пакеты (sniffcraft, locales-iso)
+  packages/          — кастомные пакеты (sniffcraft, photocraft, locales-iso)
 main/                — десктоп (AMD GPU, установлен и работает)
   system/            — точка входа (default.nix) + hardware/disk/gpu, powersaving
   home/              — home-manager: софт этого хоста
@@ -19,6 +19,11 @@ laptop/              — ноут (NVIDIA)
   system/            — точка входа (default.nix) + hardware/disk/gpu
   home/              — home-manager этого хоста
 ```
+
+PhotoCraft подключён в `common/home/soft/packages.nix`: версия `0.3.0` и SHA-256
+релизного архива закреплены в `common/packages/photocraft.nix`. Пакет включает
+пункт меню с описанием и иконкой; настройки сохраняются самим приложением в
+`${XDG_CONFIG_HOME:-~/.config}/photocraft/preferences.json`.
 
 Разметка диска (GPT, EFI-раздел, раздел под ZFS) — единственный ручной шаг:
 диск общий с Windows (двачбут), и disko не может размечать автоматически, не
