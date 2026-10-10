@@ -25,7 +25,7 @@ in
   microvm = {
     hypervisor = "qemu";
     vcpu = 4;
-    mem = 8192;
+    mem = 16384;
 
     vsock.cid = vm.vsockCid;
     vsock.ssh.enable = true;
@@ -127,6 +127,7 @@ in
     interface = "eth0";
   };
   networking.nameservers = [ "1.1.1.1" ];
+  networking.firewall.enable = false;
 
   programs.zsh = {
     enable = true;
@@ -159,7 +160,7 @@ in
 
   services.openssh = {
     enable = true;
-    #! слушает только vsock (sshd-vsock.socket от systemd-ssh-generator)
+    #! управление VM использует vsock (sshd-vsock.socket от systemd-ssh-generator)
     openFirewall = false;
     settings = {
       PasswordAuthentication = false;

@@ -18,4 +18,7 @@ rec {
   disksDir = "/run/avm/disks";
   gateway = "172.30.42.1";
   guest = "172.30.42.2";
+  lanMac = "02:00:00:00:42:25";
+  hostGateway = "172.30.43.1";
+  hostPeer = "172.30.43.2";
 }

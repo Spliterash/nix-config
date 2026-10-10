@@ -3,6 +3,9 @@
   xdg.enable = true;
 
   programs.gpg.enable = true;
+  programs.zellij = {
+    enable = true;
+  };
   services.gpg-agent = {
     enable = true;
     pinentry.package = pkgs.pinentry-qt;

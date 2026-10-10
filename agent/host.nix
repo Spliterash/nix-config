@@ -39,9 +39,15 @@ let
               else error("некорректный mount: \(.)") end
           else . end))
         | .proxy //= []
+        | .network |= (if . == null then { mode: "isolated" } else . end)
+        | .network.mode |= (if . == null then "isolated" else . end)
         | if all(.mounts[]; (.host | abs) and (.guest | abs) and (.readOnly // false | type == "boolean"))
             and (.proxy | type == "array" and all(.[]; type == "string" and (ltrimstr("*.") | length > 0)))
             and ((.proxy | length) == 0 or (.outbound | type == "object"))
+            and (.network | type == "object")
+            and (.network.mode | IN("isolated", "lan"))
+            and (.network.mode != "lan" or
+              (.network.interface | type == "string" and test("^[a-zA-Z0-9_.-]{1,15}$")))
           then . else error("некорректный config.yml") end
       ' >/run/avm/config.json
 
@@ -103,6 +109,7 @@ let
       chmod 644 ${vm.hostDir}/gpg-public-keys
 
       sync_mounts
+      jq '.network' /run/avm/config.json >/run/avm/network.json
 
       #! proxy.json с секретами читает только root, гостю конфиг не отдаём
       (umask 077 && jq --slurpfile p /run/avm/config.json '
