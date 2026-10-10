@@ -10,6 +10,7 @@
 }@allInputs:
 let
   llm = inputs.llm-agents.packages.${system};
+  t3code = llm.t3code.override { providerPackages = [ llm.claude-code llm.codex ]; };
   vm = import ./vm.nix allInputs;
 in
 {
@@ -238,6 +239,24 @@ in
     reload = config.systemd.services.avm-mounts.script;
   };
 
+  systemd.services.t3code = {
+    description = "T3 Code remote agent sessions";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "network-online.target" ];
+    requires = [ "avm-mounts.service" ];
+    after = [ "network-online.target" "avm-mounts.service" ];
+    environment.HOME = "/home/${username}";
+    path = [ llm.claude-code llm.codex pkgs.git pkgs.openssh pkgs.nix ];
+    serviceConfig = {
+      User = username;
+      WorkingDirectory = "/home/${username}";
+      ExecStart = "${lib.getExe t3code} serve --host 0.0.0.0 --port 3773";
+      Restart = "on-failure";
+      RestartSec = 5;
+      UMask = "0077";
+    };
+  };
+
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.extraSpecialArgs = {
@@ -283,6 +302,7 @@ in
     home.packages = [
       llm.claude-code
       llm.codex
+      t3code
     ];
   };
 }
