@@ -38,8 +38,13 @@
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.${username} = {
-    hashedPassword = "$y$j9T$sDul5xTFeiGQyorzE4Hhs.$DAp3OxAIVl4u4pWA6FQxJ2B1.Ge57E985FICueLwZz9";
+    # Initial password only, never resets existing accounts; SSH stays key-only.
+    initialPassword = "0";
     isNormalUser = true;
+    # Bootstrap key so fresh laptop is reachable without synced ~/.ssh.
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHhPmnp+l2jntPqGQQLmsMD3vVSjNNiZiXg57yI9Ya/K spliterash@main"
+    ];
     description = username;
     shell = pkgs.zsh;
     extraGroups = [
@@ -48,7 +53,6 @@
     ];
     packages = with pkgs; [
       kdePackages.kate
-      #  thunderbird
     ];
   };
 
@@ -94,7 +98,18 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      AllowUsers = [ username ];
+      AuthenticationMethods = "publickey";
+      PubkeyAuthentication = true;
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

@@ -1,4 +1,4 @@
-{ username, ... }:
+{ ... }:
 {
   imports = [
     ../../common/system
@@ -9,36 +9,9 @@
     ../../agent/host.nix
     # ./powersaving.nix
   ];
-
-  #? ZFS requires networking.hostId to be set
   networking.hostId = "97199ad0";
-  networking.hostName = "main"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  services.openssh = {
-    enable = true;
-    openFirewall = true;
-    settings = {
-      AllowUsers = [ username ];
-      AuthenticationMethods = "publickey";
-      PubkeyAuthentication = true;
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      PermitRootLogin = "no";
-    };
-  };
-
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It's perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "25.11"; # Did you read the comment?
+  networking.hostName = "main";
+  system.stateVersion = "25.11";
 
   services.pipewire.extraConfig.pipewire = {
     "10-fix-popping" = {

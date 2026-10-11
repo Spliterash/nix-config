@@ -24,6 +24,7 @@
     ./plasma
     ./sound
     ./dev-tools.nix
+    ./syncthing.nix
 
     # Свалка
     ./soft/packages.nix
