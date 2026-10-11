@@ -71,6 +71,7 @@ in
         (extension "search_by_image" "{2e5ff8c8-32fe-46d0-9fc8-6b8986621f3c}")
         (extension "text-fragment" "text-fragment@example.com")
         (extension "clipboard2file" "{7343f7d1-e6ef-4d8a-8449-d4c18850f559}")
+        (extension "traduzir-paginas-web" "{036a55b4-5e72-4d05-a06c-cba2dfcc134a}")
         # (extension "languagetool" "languagetool-webextension@languagetool.org")
         # (extension "bitwarden-password-manager" "{446900e4-71c2-419f-a6a7-df9c091e268b}")
         # (extension "umatrix" "uMatrix@raymondhill.net")
@@ -129,7 +130,9 @@ in
 
           #? https://github.com/FirefoxCSS-Store/FirefoxCSS-Store.github.io/blob/main/README.md#generic-installation
           "sidebar.revamp" = false;
+          "sidebar.visibility" = "hide-launcher";
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+          "browser.uidensity" = 1;
 
           #! fuck wayland, I guess?
           #? https://www.reddit.com/r/firefox/comments/1qkp6ib/comment/occi226

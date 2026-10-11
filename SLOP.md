@@ -321,6 +321,10 @@ Boot Manager на общем ESP. Secure Boot должен оставаться 
   `common/home/soft/furryfox/default.nix` используются загрузочные URL без
   `/en-US/`: `https://addons.mozilla.org/firefox/downloads/latest/.../latest.xpi`.
   После применения конфига полностью перезапусти Firefox; профиль удалять не нужно.
+- **Sidebery без дополнительной панели кнопок Firefox.** В общем профиле задано
+  `sidebar.visibility = "hide-launcher"`: панель кнопок скрыта, сама Sidebery
+  остаётся доступной. Настройка действует на обоих хостах и в профиле «Амиго».
+  TWP — Translate Web Pages устанавливается общей политикой расширений.
 
 ## Что дальше по месту
 
