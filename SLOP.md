@@ -315,6 +315,12 @@ Boot Manager на общем ESP. Secure Boot должен оставаться 
   роняло весь установщик загрузчика (вывод git скрыт `2>/dev/null`). Git-вызов
   сделан нефатальным (`|| true`). Загрузке это не мешало (boot-файлы к тому
   моменту уже установлены), но ломало `nixos-install`/`nixos-rebuild`.
+- **Firefox: поисковики есть, расширений нет, `ERROR_CORRUPT_FILE`.** URL вида
+  `https://addons.mozilla.org/en-US/firefox/downloads/latest/.../latest.xpi`
+  может вернуть HTML-страницу проверки с HTTP 200 вместо XPI. В
+  `common/home/soft/furryfox/default.nix` используются загрузочные URL без
+  `/en-US/`: `https://addons.mozilla.org/firefox/downloads/latest/.../latest.xpi`.
+  После применения конфига полностью перезапусти Firefox; профиль удалять не нужно.
 
 ## Что дальше по месту
 

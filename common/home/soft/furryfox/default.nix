@@ -53,7 +53,7 @@ in
         extension = shortId: uuid: {
           name = uuid;
           value = {
-            install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/${shortId}/latest.xpi";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/${shortId}/latest.xpi";
             installation_mode = "normal_installed";
           };
         };
