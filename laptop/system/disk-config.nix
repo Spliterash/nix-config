@@ -26,7 +26,7 @@
               };
             };
             zfs = {
-              size = "100%";
+              end = "-100G";
               content = {
                 type = "zfs";
                 pool = "zroot";

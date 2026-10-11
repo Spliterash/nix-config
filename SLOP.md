@@ -32,11 +32,11 @@ PhotoCraft подключён в `common/home/soft/packages.nix`: версия `
 одной командой (см. пункт 4), руками ничего создавать/монтировать/grep'ать
 не нужно.
 
-Исключение — `laptop`: он ставился на **весь диск** (NixOS-only, без Windows),
-поэтому его `laptop/system/disk-config.nix` описывает полный layout (ESP 2 ГБ + раздел под
-ZFS) и disko размечает *и* монтирует ESP сам — ручная разметка (§2) и ручное
-монтирование ESP (§4) для него не нужны. Ставился он удалённо по сети с `main`
-через `nixos-anywhere` — см. отдельный раздел ниже.
+Исключение — `laptop`: его `laptop/system/disk-config.nix` описывает весь
+layout — ESP 2 GiB, раздел под ZFS и около 100 GiB незанятого места в конце
+диска для Windows (`end = "-100G"`). Disko размечает диск и монтирует ESP сам —
+ручная разметка (§2) и ручное монтирование ESP (§4) не нужны. Переустановка
+удалённая с `main` через `nixos-anywhere` — см. отдельный раздел ниже.
 
 ## 0. Что нужно знать заранее
 
@@ -51,8 +51,9 @@ ZFS) и disko размечает *и* монтирует ESP сам — ручн
 - Шифрование пула (native ZFS encryption, `keylocation=prompt`) — только у
   `laptop`. `main` без шифрования. Смотри сам `<имя>/system/disk-config.nix` нужного
   хоста, а не эту инструкцию, если не уверен. Файла с ключом нигде нет —
-  пароль спрашивается интерактивно в терминале при создании пула (пункт 4)
-  и на каждой загрузке.
+  пароль спрашивается интерактивно в терминале при создании пула (пункт 4).
+  При загрузке `laptop` запрос идёт через systemd-initrd и Plymouth с темой
+  Breeze; для графической формы нужен работающий видеовывод в initrd.
 - Если рядом стоит Windows на том же диске — сначала ставь/оставь Windows,
   EFI-раздел общий на оба ОС.
 
@@ -142,8 +143,13 @@ sudo nixos-install --flake .#<имя> --root /mnt
 
 ## 6. Первая загрузка
 
-Перезагрузись, убери флешку. Автологин в Plasma включён
-(`common/system/desktop-environment.nix`) — сразу должен появиться рабочий стол.
+Перезагрузись, убери флешку. На `laptop` сначала введи пароль ZFS в Plymouth.
+После разблокировки пула автологин в Plasma
+(`common/system/desktop-environment.nix`) открывает рабочий стол.
+
+На `laptop` включена автоматическая блокировка экрана и блокировка после сна;
+для разблокировки требуется пароль пользователя без беспарольного периода
+(`laptop/home/power.nix`). Пароль ZFS и пароль пользователя — разные настройки.
 
 Дальше конфиг живёт по пути из `programs.nh.flake`
 (`/home/<юзер>/config`) — склонируй репозиторий именно туда, чтобы работали
@@ -178,9 +184,15 @@ email ключа должен быть подтверждён в аккаунт�
 `main`, по LAN на ноут копируется только результат (closure). Ноут при этом
 загружен с NixOS live-ISO с доступом по SSH (root, пароль установщика).
 
-Важно: `laptop/system/disk-config.nix` описывает **весь диск** — ESP (2 ГБ,
-`/boot`) и раздел под ZFS создаёт сам disko. Ручная разметка и монтирование
-ESP не нужны.
+Важно: disko **стирает весь SSD ноутбука**, создаёт ESP (2 GiB, `/boot`) и
+раздел под ZFS, оставляя около 100 GiB (107,4 GB) незанятыми под Windows.
+Первоначальная установка занимала весь диск; уменьшить существующий ZFS
+на месте нельзя. Изменение конфига и `nixos-rebuild` сами диск не переразмечают.
+
+Перед стиранием проверь на live-системе, что это именно ноутбук и нужный SSD:
+```bash
+ssh root@<ip> 'hostname; lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINTS,MODEL; readlink -f /dev/disk/by-id/nvme-Micron_MTFDHBA512QFD_20432B2E2878'
+```
 
 1. С `main` поставь ssh-ключ на ноут и сними реальный hardware-config:
    ```bash
@@ -193,24 +205,35 @@ ESP не нужны.
    P=$(nix build .#nixosConfigurations.laptop.config.system.build.diskoScript --print-out-paths --no-link)
    nix copy --to ssh://root@<ip> --no-check-sigs "$P"
    ```
-3. Прогони disko на ноуте, **подав пароль шифрования в stdin** (см. грабли):
+3. Прогони disko на ноуте, **подав пароль шифрования в stdin** (см. грабли).
+   В Bash введи пароль интерактивно, не записывая его в историю команд:
    ```bash
-   printf '%s\n%s\n' 'PASSPHRASE' 'PASSPHRASE' | ssh root@<ip> "$P"
+   read -r -s -p 'Пароль ZFS (не менее 8 символов): ' PASSPHRASE; printf '\n'
+   printf '%s\n%s\n' "$PASSPHRASE" "$PASSPHRASE" | ssh root@<ip> "$P"
+   unset PASSPHRASE
    ```
    Диск размечен, пул создан и смонтирован в `/mnt`.
 4. Установи систему (сборка на `main`, копия на ноут) и перезагрузи:
    ```bash
-   nixos-anywhere --flake .#laptop --phases install,reboot --target-host root@<ip>
+   nix run github:nix-community/nixos-anywhere -- --flake .#laptop --phases install,reboot --target-host root@<ip>
    ```
+
+После установки NixOS загрузи установщик Windows в режиме UEFI и выбери
+незанятое место в конце диска. Разделы EFI и ZFS не удаляй и не форматируй.
+Windows создаст свои разделы в свободном месте; при смене порядка загрузки
+верни Linux Boot Manager первым в UEFI. Systemd-boot обнаруживает Windows
+Boot Manager на общем ESP. Secure Boot должен оставаться выключенным:
+подписанная загрузка NixOS в этом конфиге не настроена.
 
 ### Грабли (проверено на практике)
 
 - **Пароль ZFS ≥ 8 символов** — короче ZFS не примет, `zpool create` упадёт.
-- **`keylocation=prompt` + nixos-anywhere.** Штатная disko-фаза nixos-anywhere
-  не умеет неинтерактивно ввести passphrase (виснет на prompt), поэтому disko
-  запускается вручную (шаг 3). При непривязанном к tty stdin ZFS читает пароль
-  прямо из stdin — обычный пайп, без `-t`/`expect`. Пароль в репозиторий не
-  попадает, `keylocation` остаётся честным `prompt`.
+- **`keylocation=prompt` + nixos-anywhere.** При запуске напрямую из терминала
+  актуальный nixos-anywhere выделяет SSH TTY и запускает disko в нём: пароль
+  ZFS вводится в терминале запускающего компьютера, не на экране ноутбука.
+  Не перенаправляй stdin установщика и не запускай его через пайп. Для
+  неинтерактивного запуска остаётся отдельный disko с передачей пароля в stdin
+  (шаг 3). Пароль в репозиторий не попадает, `keylocation` остаётся `prompt`.
 - **Чистый экспорт пула перед ребутом.** После ручного disko (шаг 3) пул
   остаётся импортированным под hostid live-ISO. При `boot.zfs.forceImportRoot
   = false` установленная система откажется импортировать «чужой» пул и упадёт
@@ -238,6 +261,17 @@ sunshine/xbox/vm) уже общий для всех хостов. Если на 
 нужно — убирай точечно из `common/system/default.nix` или переопределяй в
 `laptop/system/default.nix`.
 
-Если у ноута NVIDIA Optimus (два GPU) — донастрой `hardware.nvidia.prime` в
-`laptop/system/gpu.nix` с реальными bus id (`lspci | grep -E "VGA|3D"`), это
-не входит в базовую заглушку.
+На Lenovo 82EY проверены AMD Renoir (`05:00.0`) и NVIDIA GTX 1650 (`01:00.0`).
+Встроенный экран eDP подключён к AMD, HDMI — к NVIDIA. В
+`laptop/system/gpu.nix` задан ранний `amdgpu` для Plymouth и PRIME offload
+с этими PCI-адресами; запуск приложения на дискретной карте:
+`nvidia-offload <команда>`.
+
+Для GTX 1650 выбран закрытый модуль NVIDIA без GSP, включены RTD3 и
+сохранение видеопамяти при сне. У открытого модуля RTD3 поддерживается только
+на Ampere и новее — см. [ограничения NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/595.45.04/README/kernel_open.html).
+При замене ноутбука или смене режима GPU в BIOS заново проверь PCI-адреса
+и подключение экрана. После установки проверь графический запрос ZFS,
+цикл сон/пробуждение и HDMI на железе. NVIDIA может оставаться активной,
+пока приложение использует её или к HDMI подключён монитор.
+Гибернация не настроена: текущий ZFS-конфиг добавляет `nohibernate`, swap отсутствует.

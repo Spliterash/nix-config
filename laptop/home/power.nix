@@ -3,6 +3,13 @@
 #? common/home/plasma/default.nix. На main вместо этого main/home/power.nix
 #? (чёрная заливка локскрина, монитор гаснет через 15 минут).
 {
+  programs.plasma.kscreenlocker = {
+    autoLock = true;
+    lockOnResume = true;
+    passwordRequired = true;
+    passwordRequiredDelay = 0;
+  };
+
   programs.plasma.powerdevil = {
     battery = {
       turnOffDisplay.idleTimeout = 60; # 1 минута
