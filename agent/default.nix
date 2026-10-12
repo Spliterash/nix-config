@@ -319,6 +319,9 @@ in
       llm.claude-code
       llm.codex
       pkgs.paseo
+      pkgs.jq
+      pkgs.bun
+      pkgs.nodejs
     ];
   };
 }
