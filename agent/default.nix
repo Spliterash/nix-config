@@ -10,7 +10,6 @@
 }@allInputs:
 let
   llm = inputs.llm-agents.packages.${system};
-  t3code = llm.t3code.override { providerPackages = [ llm.claude-code llm.codex ]; };
   vm = import ./vm.nix allInputs;
 in
 {
@@ -239,18 +238,35 @@ in
     reload = config.systemd.services.avm-mounts.script;
   };
 
-  systemd.services.t3code = {
-    description = "T3 Code remote agent sessions";
+  systemd.services.paseo = {
+    description = "Paseo remote agent sessions";
     wantedBy = [ "multi-user.target" ];
     wants = [ "network-online.target" ];
     requires = [ "avm-mounts.service" ];
-    after = [ "network-online.target" "avm-mounts.service" ];
-    environment.HOME = "/home/${username}";
-    path = [ llm.claude-code llm.codex pkgs.git pkgs.openssh pkgs.nix ];
+    after = [
+      "network-online.target"
+      "avm-mounts.service"
+    ];
+    environment = {
+      HOME = "/home/${username}";
+      PASEO_LISTEN = "0.0.0.0:6767";
+      PASEO_RELAY_ENABLED = "false";
+      PASEO_WEB_UI_ENABLED = "true";
+    };
+    path = [
+      llm.claude-code
+      llm.codex
+      pkgs.git
+      pkgs.openssh
+      pkgs.nix
+      pkgs.procps
+      pkgs.gnutar
+      pkgs.bzip2
+    ];
     serviceConfig = {
       User = username;
       WorkingDirectory = "/home/${username}";
-      ExecStart = "${lib.getExe t3code} serve --host 0.0.0.0 --port 3773";
+      ExecStart = lib.getExe' pkgs.paseo "paseo-server";
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";
@@ -302,7 +318,7 @@ in
     home.packages = [
       llm.claude-code
       llm.codex
-      t3code
+      pkgs.paseo
     ];
   };
 }
