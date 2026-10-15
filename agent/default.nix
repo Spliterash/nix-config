@@ -25,7 +25,7 @@ in
   microvm = {
     hypervisor = "qemu";
     vcpu = 4;
-    mem = 16384;
+    mem = 26624;
 
     vsock.cid = vm.vsockCid;
     vsock.ssh.enable = true;
@@ -253,20 +253,11 @@ in
       PASEO_RELAY_ENABLED = "false";
       PASEO_WEB_UI_ENABLED = "true";
     };
-    path = [
-      llm.claude-code
-      llm.codex
-      pkgs.git
-      pkgs.openssh
-      pkgs.nix
-      pkgs.procps
-      pkgs.gnutar
-      pkgs.bzip2
-    ];
     serviceConfig = {
       User = username;
       WorkingDirectory = "/home/${username}";
-      ExecStart = lib.getExe' pkgs.paseo "paseo-server";
+      ExecStart =
+        "${lib.getExe config.users.users.${username}.shell} -lc 'exec ${lib.getExe' pkgs.paseo "paseo-server"}'";
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";
@@ -322,6 +313,7 @@ in
       pkgs.jq
       pkgs.bun
       pkgs.nodejs
+      pkgs.python313
     ];
   };
 }

@@ -63,13 +63,14 @@ CLI на хосте: `paseo --host 192.168.0.25:6767 ls`.
 Состояние и логи: `avm ssh systemctl status paseo` и
 `avm ssh sudo journalctl -u paseo -b`. Перезапуск агента:
 `avm ssh sudo systemctl restart paseo` (жизненным циклом управляет systemd).
-В PATH сервиса явно включены `procps` для завершения дочерних процессов и
-`gnutar`/`bzip2` для распаковки голосовых моделей. Без `ps` worker падает с
-`spawn ps ENOENT`, хотя supervisor оставляет systemd-сервис в состоянии `active`.
+Paseo запускается через login-shell пользователя и получает то же окружение,
+что `avm ssh`: пользовательский PATH, Nix-профили, `~/.local/bin` и переменные
+NixOS/Home Manager, включая `JAVA_HOME` и `NIX_LD`. Отдельного списка инструментов
+у сервиса нет; интерактивные настройки `.zshrc` при запуске сервиса не загружаются.
 Claude/Codex используют авторизацию пользователя внутри VM; при её отсутствии
 нужен `avm ssh claude auth login` или `avm ssh codex login`.
 
-Применить замену T3 Code на Paseo, когда можно остановить VM:
+Применить изменения конфигурации VM, когда можно её остановить:
 
 ```sh
 avm stop
