@@ -37,7 +37,7 @@
 
   fileSystems."/mnt/data" = {
     device = "/dev/disk/by-uuid/FAEE5F35EE5EEA01";
-    fsType = "ntfs3";
+    fsType = "ntfs";
     options = [
       "rw"
       "uid=1000"

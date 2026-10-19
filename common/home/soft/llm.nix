@@ -7,8 +7,6 @@ in
     inputs.codex-desktop-linux.homeManagerModules.default
   ];
   home.packages = [
-    llm.claude-code
-    llm.codex
     llm.opencode
     llm.omp
     # Чтобы не ломались плагины

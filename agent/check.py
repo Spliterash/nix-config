@@ -15,6 +15,14 @@ def address(url, *, guest=False):
     return ipaddress.ip_address(subprocess.check_output(command, text=True).strip())
 
 
+def check_nix():
+    subprocess.run(["avm", "ssh", "bash -se"], check=True, input=r'''
+nix-shell -p btop --run 'btop --version'
+env -u NIX_PATH nix-shell -p btop --run 'btop --version'
+test "$(, --cache-level 0 figlet -f term AVM)" = AVM
+''', text=True)
+
+
 def check_mounts():
     subprocess.run(["avm", "ssh", "sudo bash -se"], check=True, input=r'''
 systemctl is-active --quiet avm-mounts
@@ -61,6 +69,7 @@ git -C "$repo" verify-commit HEAD
 
 
 def main():
+    check_nix()
     check_mounts()
     check_signing()
     for name in ["root", "docker"]:

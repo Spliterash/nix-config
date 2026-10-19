@@ -1,13 +1,11 @@
 { pkgs, username, ... }:
 {
   imports = [
-    ./nix.nix
+    ./cli.nix
     ./impermanence.nix
     ./locale.nix
     ./desktop-environment.nix
     ./boot-generations.nix
-    ./dev-tools.nix
-    ./nix-ld.nix
     ./throne.nix
     ./docker.nix
     ./wine.nix
@@ -21,7 +19,7 @@
   ];
 
   # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_6_18;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -56,9 +54,6 @@
     ];
   };
 
-  programs.zsh.enable = true;
-  environment.shells = with pkgs; [ zsh ];
-
   programs.nh.enable = true;
   programs.nh.flake = "/home/${username}/config";
 
@@ -72,9 +67,6 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    git
-    git-lfs
-    jq
     inxi
     libnotify # notify-send
     ayugram-desktop

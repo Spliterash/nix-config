@@ -1,5 +1,6 @@
 {
   _class,
+  config,
   lib,
   pkgs,
   inputs,
@@ -9,11 +10,13 @@
   nix = {
     package = lib.mkDefault pkgs.nix;
     gc.automatic = false;
+    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     registry = {
       nixpkgs.flake = inputs.nixpkgs;
       # master.flake = inputs.nixpkgs-master;
     };
     settings = {
+      nix-path = config.nix.nixPath;
       warn-dirty = false;
       auto-optimise-store = true;
       use-xdg-base-directories = true;

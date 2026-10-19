@@ -30,9 +30,25 @@ avm logs proxy       # лог внешнего sing-box
 
 Сама по себе виртуалка не стартует — только руками.
 
-В госте `nix-shell` использует `nixpkgs` из закреплённого input flake через
-`nix.settings.nix-path`, без channels. Для `ping`: `nix-shell -p iputils`.
-Изменение этого параметра требует обновления сборки VM; `avm reload` его не применяет.
+## Nix и общая CLI-база
+
+Хосты и AVM используют `common/system/cli.nix`: настройки Nix, comma с готовой
+базой nix-index, Zsh, Git, jq, Java, Node.js, Bun, Python и интеграцию Home Manager.
+`common/home/cli.nix` объединяет настройки shell, Git, fzf, Yazi и пакеты Claude/Codex.
+Рабочий стол остаётся в хостовых модулях; прокидывание daemon/GPG и особенности VM —
+в `agent/default.nix`.
+
+`nix-shell` использует закреплённый input `nixpkgs`: общий `nix.nixPath` задаёт
+`NIX_PATH`, а `nix.settings.nix-path` повторяет его для процессов без этой переменной.
+Пути не зависят от channels. Настройки только `nix.settings.nix-path` недостаточно:
+старый `NIX_PATH` из окружения имеет приоритет и может указывать на отсутствующие channels.
+
+Примеры: `nix-shell -p btop` или `, figlet AVM`. Изменения требуют обновления
+сборки VM: когда её можно остановить, выполнить `avm stop`, `nh os switch`,
+`avm start` и открыть новое SSH-подключение. `avm reload` обновляет только mounts.
+
+Проверка после применения: `python3 -c 'from agent.check import check_nix; check_nix()'`.
+Она запускает btop через `nix-shell` с `NIX_PATH` и без него, затем figlet через comma.
 
 ## Память
 

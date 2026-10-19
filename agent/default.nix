@@ -2,22 +2,15 @@
   config,
   lib,
   pkgs,
-  inputs,
   username,
-  system,
-  flakePath,
   ...
 }@allInputs:
 let
-  llm = inputs.llm-agents.packages.${system};
   vm = import ./vm.nix allInputs;
 in
 {
   imports = [
-    inputs.home-manager.nixosModules.home-manager
-    ../common/system/nix.nix
-    ../common/system/dev-tools.nix
-    ../common/system/nix-ld.nix
+    ../common/system/cli.nix
   ];
 
   system.stateVersion = "26.05";
@@ -130,21 +123,10 @@ in
   networking.nameservers = [ "1.1.1.1" ];
   networking.firewall.enable = false;
 
-  programs.zsh = {
-    enable = true;
-    enableGlobalCompInit = false;
-  };
-  environment.shells = [ pkgs.zsh ];
+  programs.zsh.enableGlobalCompInit = false;
   environment.variables.NIX_REMOTE = "daemon";
 
-  nix.settings.nix-path = [ "nixpkgs=${inputs.nixpkgs}" ];
-
-  environment.systemPackages = with pkgs; [
-    ffmpeg
-    git
-    git-lfs
-    jq
-  ];
+  environment.systemPackages = [ pkgs.ffmpeg ];
 
   users.users.${username} = {
     isNormalUser = true;
@@ -266,26 +248,9 @@ in
     };
   };
 
-  home-manager.useGlobalPkgs = true;
-  home-manager.useUserPackages = true;
-  home-manager.extraSpecialArgs = {
-    inherit
-      inputs
-      username
-      system
-      flakePath
-      ;
-  };
   home-manager.users.${username} = {
     home.stateVersion = "26.05";
-    imports = [
-      ../common/home/shell/zsh.nix
-      ../common/home/shell/aliases.nix
-      ../common/home/shell/fzf.nix
-      ../common/home/git.nix
-      ../common/home/soft/yazi
-      ../common/home/dev-tools.nix
-    ];
+    imports = [ ../common/home/cli.nix ];
     programs.gpg = {
       enable = true;
       settings.no-autostart = true;
@@ -308,14 +273,6 @@ in
     xdg.configFile."shell/".source = lib.mkForce ../common/home/shell/scripts;
     #! compaudit обходит все completion-каталоги в /nix/store, а он на общей FS
     programs.zsh.completionInit = "autoload -U compinit && compinit -C";
-    home.packages = [
-      llm.claude-code
-      llm.codex
-      pkgs.paseo
-      pkgs.jq
-      pkgs.bun
-      pkgs.nodejs
-      pkgs.python313
-    ];
+    home.packages = [ pkgs.paseo ];
   };
 }

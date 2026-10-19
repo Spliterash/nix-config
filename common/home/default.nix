@@ -16,14 +16,9 @@
     ./mutable-json.nix
 
     # База
-    ./shell/aliases.nix
-    ./shell/zsh.nix
-    ./shell/fzf.nix
-
-    ./git.nix
+    ./cli.nix
     ./plasma
     ./sound
-    ./dev-tools.nix
     ./syncthing.nix
 
     # Свалка
@@ -31,7 +26,6 @@
     ./soft/jetbrains/idea.nix
     ./soft/vscode
     ./soft/wezterm
-    ./soft/yazi
     ./soft/llm.nix
     ./soft/furryfox
     ./soft/sourcegit.nix

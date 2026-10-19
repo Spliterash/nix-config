@@ -1,391 +1,122 @@
-# Установка
+# NixOS: рабочая памятка
 
-Флейк на несколько хостов. Каждый хост живёт в `<имя>/` (папка верхнего уровня)
-и собирается как `nixosConfigurations.<имя>` (сейчас есть `main` и `laptop`).
+## Где менять конфиг
 
-Структура host-центричная: всё общее — в `common/`, всё host-only — в папке
-своего хоста. Внутри каждой папки разделение `system/` (NixOS) и `home/`
-(home-manager).
+- `flake.nix` — хосты `main` и `laptop`; `settings.nix` — общие параметры.
+- `common/system/` — общие NixOS-модули; `common/home/` — Home Manager.
+- `main/` и `laptop/` — настройки конкретного хоста, также разделены на `system/` и `home/`.
+- `common/packages/` — собственные пакеты.
+- Агентская VM: [agent/README.md](agent/README.md).
 
-```
-common/              — общее для всех хостов
-  system/            — системные NixOS-модули (вкл. nix.nix, impermanence.nix)
-  home/              — home-manager конфиг (общий)
-  packages/          — кастомные пакеты (sniffcraft, photocraft, locales-iso)
-main/                — десктоп (AMD GPU, установлен и работает)
-  system/            — точка входа (default.nix) + hardware/disk/gpu, powersaving
-  home/              — home-manager: софт этого хоста
-laptop/              — ноут (NVIDIA)
-  system/            — точка входа (default.nix) + hardware/disk/gpu
-  home/              — home-manager этого хоста
-```
-
-PhotoCraft подключён в `common/home/soft/packages.nix`: версия `0.3.0` и SHA-256
-релизного архива закреплены в `common/packages/photocraft.nix`. Пакет включает
-пункт меню с описанием и иконкой; настройки сохраняются самим приложением в
-`${XDG_CONFIG_HOME:-~/.config}/photocraft/preferences.json`.
-
-Разметка диска (GPT, EFI-раздел, раздел под ZFS) — единственный ручной шаг:
-диск общий с Windows (двачбут), и disko не может размечать автоматически, не
-зная где чужие разделы. Всё остальное — пул, датасеты, шифрование, снапшот
-для имперманенса, монтирование под `/mnt` — делает готовый скрипт disko
-одной командой (см. пункт 4), руками ничего создавать/монтировать/grep'ать
-не нужно.
-
-Исключение — `laptop`: его `laptop/system/disk-config.nix` описывает весь
-layout — ESP 2 GiB, раздел под ZFS и около 100 GiB незанятого места в конце
-диска для Windows (`end = "-100G"`). Disko размечает диск и монтирует ESP сам —
-ручная разметка (§2) и ручное монтирование ESP (§4) не нужны. Переустановка
-удалённая с `main` через `nixos-anywhere` — см. отдельный раздел ниже.
-
-## 0. Что нужно знать заранее
-
-- Каждый хост — отдельный `networking.hostId` (обязателен для ZFS) и
-  `networking.hostName`. Уже прописаны в `<имя>/system/default.nix`.
-- Имперманенс: корень (`/`) откатывается к чистому ZFS-снапшоту
-  `zroot/root@blank` при каждой загрузке (см. `common/system/impermanence.nix`). Всё, что
-  должно пережить перезагрузку, лежит в `/persistent` (и `/shit` — для
-  кэшей типа `.cache`/`.gradle`/`.npm`, которые не обязательно снапшотить).
-  Снапшот создаётся автоматически при создании пула (`postCreateHook` в
-  `<имя>/system/disk-config.nix`) — руками ничего делать не нужно.
-- Шифрование пула (native ZFS encryption, `keylocation=prompt`) — только у
-  `laptop`. `main` без шифрования. Смотри сам `<имя>/system/disk-config.nix` нужного
-  хоста, а не эту инструкцию, если не уверен. Файла с ключом нигде нет —
-  пароль спрашивается интерактивно в терминале при создании пула (пункт 4).
-  При загрузке `laptop` запрос идёт через systemd-initrd и Plymouth с темой
-  Breeze; для графической формы нужен работающий видеовывод в initrd.
-- Если рядом стоит Windows на том же диске — сначала ставь/оставь Windows,
-  EFI-раздел общий на оба ОС.
-- На `main` включена zram-подкачка объёмом 50% RAM (`main/system/default.nix`):
-  страницы сжимаются в оперативной памяти, дисковый swap не создаётся.
-  Это запас для сжимаемых данных, а не гарантия от OOM. Проверка после применения:
-  `swapon --show` и `zramctl`.
-
-## 1. Загрузка установщика
-
-Скачай NixOS minimal ISO, запиши на флешку, загрузись. Подключи сеть
-(`nmtui` в графическом окружении установщика или `nmcli` в консоли).
-
-## 2. Разметка диска
-
-Определи целевой диск:
+Рабочая копия ожидается в `~/config`. Применение на текущем хосте:
 
 ```bash
-ls -la /dev/disk/by-id/
+nh os build ~/config
+nh os switch ~/config
 ```
 
-Через `gdisk`/`parted`/`cfdisk` создай GPT со следующими разделами:
+## Данные и доступ
 
-1. **EFI System Partition** — ~512 МиБ–1 ГиБ, тип `ef00`, `mkfs.vfat -F32`.
-   Если диск общий с Windows и ESP уже есть — используй его, новый не нужен.
-2. **Раздел под ZFS** — весь оставшийся простор. Больше ничего с ним делать
-   не нужно, пул создаётся на следующем шаге.
+- При загрузке `/` откатывается к `zroot/root@blank`. Новые каталоги с важными
+  данными добавляй в `common/system/impermanence.nix`, иначе они пропадут после ребута.
+- `/persistent` сохраняется и снапшотится; `/shit` — сохраняемые кэши без
+  автоснапшотов. Хранилище контейнеров в `/var/lib/docker` тоже без автоснапшотов.
+  Снапшоты на том же диске не заменяют резервную копию.
+- `laptop` использует шифрование ZFS с запросом пароля; `main` не зашифрован.
+- После установки задай пароль через `passwd`. Начальный пароль указан в
+  `common/system/default.nix` и не сбрасывает пароль существующего пользователя.
+  Пароль пользователя и пароль ZFS независимы.
+- SSH в установленную систему — только по ключу обычного пользователя, не root.
+- Подпись Git включается вместе с GPG; ключ выбирается по email в `common/home/git.nix`.
+  Перед первым коммитом импортируй или создай соответствующий приватный ключ.
+  `~/.gnupg` сохраняется, но ключ и сертификат отзыва нужно резервировать отдельно.
+  Не помещай их в Git или Nix store.
 
-(Если ставишь рядом с Windows и хочешь его сохранить — раздел Windows,
-разумеется, не трогай.)
+## Переустановка laptop с main
 
-## 3. Правки в репозитории под конкретный хост
+**Disko стирает весь SSD, указанный в `laptop/system/disk-config.nix`, включая
+существующую Windows.** Создаёт ESP 2 GiB и зашифрованный ZFS, оставляет около
+100 GiB под Windows. Сначала сделай резервную копию и проверь целевой диск.
+Обычный rebuild диск не переразмечает; уменьшить существующий ZFS на месте нельзя.
 
-Клонируй этот репозиторий (или скопируй флешкой) куда угодно, например
-`/tmp/config`. После установки рабочую копию в `/home/<юзер>/config`
-нужно разместить самостоятельно; автоматического клонирования нет.
-
-Для **нового** хоста (по образцу `laptop/`, если ставишь именно
-ноут — эти правки уже сделаны, просто проверь):
-
-- `<имя>/system/disk-config.nix` — замени `REPLACE_ME_AT_INSTALL` на реальный
-  `/dev/disk/by-id/...` раздела под ZFS (без `-partN`, просто путь родителя,
-  как в `main/system/disk-config.nix`, либо сразу с `-partN`, если раздел уже
-  существует — смотри на `content.type = "gpt"` в файле, определяет, ждёт
-  ли disko целый диск или готовый раздел).
-- `networking.hostId` в `<имя>/system/default.nix` — уже задан уникально,
-  трогать не нужно, только не копируй один и тот же id на два хоста.
-
-## 4. Диск: пул, датасеты, монтирование — одной командой
-
-Disko компилирует твой `disk-config.nix` в готовый скрипт, который сам
-создаёт ZFS-пул, датасеты, снапшот для имперманенса и монтирует всё под
-`/mnt` — за один запуск, без ручного `zpool create`/`zfs create`/`mount`:
+Загрузи ноутбук с NixOS live-ISO, подключи сеть и обеспечь SSH-доступ root.
+Следующие команды выполняются на `main` в Bash из корня репозитория;
+замени `<ip>` адресом ноутбука:
 
 ```bash
-sudo "$(nix build .#nixosConfigurations.<имя>.config.system.build.diskoScript --print-out-paths --no-link)"
+TARGET='root@<ip>'
+ssh "$TARGET" 'hostname; lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINTS,MODEL; readlink -f /dev/disk/by-id/nvme-Micron_MTFDHBA512QFD_20432B2E2878'
+ssh-copy-id "$TARGET"
+ssh "$TARGET" 'nixos-generate-config --no-filesystems --show-hardware-config' \
+  > laptop/system/hardware-configuration.nix
+
+P=$(nix build .#nixosConfigurations.laptop.config.system.build.diskoScript --print-out-paths --no-link)
+nix copy --to "ssh://$TARGET" --no-check-sigs "$P"
 ```
 
-Если ставишь `laptop` — пул зашифрован, скрипт остановится на
-`Enter new passphrase:` (дважды, для подтверждения) и спросит пароль прямо в
-терминале. `main` не зашифрован, ничего спрашивать не будет.
-
-После этого под `/mnt` уже смонтированы `/`, `/persistent`, `/nix`,
-`/var/lib/docker`, `/shit`. ESP скрипт не трогает (он не описан в
-`disk-config.nix`) — монтируешь сам:
+Запуск разметки; пароль ZFS — не менее 8 символов, не записывай его в команду:
 
 ```bash
-mkdir -p /mnt/boot
-mount /dev/disk/by-id/<esp-раздел> /mnt/boot
+read -r -s -p 'Пароль ZFS: ' PASSPHRASE; printf '\n'
+printf '%s\n%s\n' "$PASSPHRASE" "$PASSPHRASE" | ssh "$TARGET" "$P"
+unset PASSPHRASE
 ```
 
-## 5. Установка
+Только после успешной разметки и монтирования `/mnt`:
 
 ```bash
-nixos-generate-config --no-filesystems --root /mnt
+nix run github:nix-community/nixos-anywhere -- \
+  --flake .#laptop --phases install,reboot --target-host "$TARGET"
 ```
 
-Перенеси нужные секции (`boot.initrd.availableKernelModules`,
-`boot.initrd.kernelModules`, `boot.kernelModules`, `hardware.cpu.*`,
-`fileSystems."/boot"` с реальным UUID ESP) в
-`<имя>/system/hardware-configuration.nix`, заменив там заглушку.
+Фаза `reboot` экспортирует пул. Если перезагружаешь live-систему вручную,
+сначала выполни **на ноутбуке** `umount /mnt/boot` и `zpool export zroot`:
+иначе `forceImportRoot = false` не позволит загрузиться с пулом, оставшимся
+импортированным под hostid установщика.
 
-Дальше:
+Windows устанавливай в свободное место, не форматируя EFI и ZFS.
+Secure Boot в этом конфиге не настроен. Рабочую копию в `~/config` после
+установки нужно разместить самостоятельно.
 
-```bash
-cd /path/to/config   # где лежит flake.nix
-sudo nixos-install --flake .#<имя> --root /mnt
-```
+### Особенность main
 
-В `common/system/default.nix` задан `initialPassword = "init"` без хеша.
-Он применяется только при создании пользователя. После установки смени его
-через `passwd`; rebuild больше не сбрасывает пароль существующего аккаунта.
-Если система установлена со старым конфигом, прежний пароль сохраняется.
+`main/system/disk-config.nix` сохраняет таблицу разделов (`destroy = false`),
+но не описывает ZFS-раздел и ESP. Это **не готовый сценарий установки с нуля**:
+перед переустановкой нужно определить существующие разделы, подключить нужный
+раздел к пулу в disko и учесть монтирование ESP. Не применяй к этому диску
+разметку ноутбука — рядом находится Windows.
 
-## 6. Первая загрузка
+## Контейнеры
 
-Перезагрузись, убери флешку. На `laptop` сначала введи пароль ZFS в Plymouth.
-После разблокировки пула автологин в Plasma
-(`common/system/desktop-environment.nix`) открывает рабочий стол.
+На хостах используется rootless Podman; `docker` — совместимая команда,
+Compose — `podman-compose`. Конфиг: `common/system/docker.nix`.
 
-На `laptop` включена автоматическая блокировка экрана и блокировка после сна;
-для разблокировки требуется пароль пользователя без беспарольного периода
-(`laptop/home/power.nix`). Пароль ZFS и пароль пользователя — разные настройки.
+- Docker API: `unix://$XDG_RUNTIME_DIR/podman/podman.sock`.
+  После изменения окружения перелогинься; проверка сокета —
+  `systemctl --user status podman.socket`.
+- `~/.local/share/containers` сохраняется на ZFS dataset `zroot/docker`,
+  смонтированном в `/var/lib/docker`. Старые данные Docker автоматически не импортируются.
+- `keep-id` включается только для отдельных сервисов через `userns_mode` в Compose.
+- `:U` у bind mount рекурсивно меняет владельцев файлов на хосте.
+- Данные PostgreSQL храни на Linux-ФС, не NTFS.
 
-На обоих хостах включён SSH только по ключу для обычного пользователя;
-парольный вход и вход root запрещены. Начальный публичный ключ `main`
-добавлен декларативно: доступ не зависит от получения `~/.ssh` через Syncthing.
+## Syncthing
 
-Конфиг в `/home/<юзер>/config` обновляется вручную через Git; этот каталог
-не синхронизируется Syncthing.
+GUI: `http://127.0.0.1:8384`. В `common/home/syncthing.nix` включены только
+пользовательская служба и трей. Устройства, папки и исключения настраиваются
+в GUI; декларативного `.stignore` для OMP сейчас нет.
 
-## Docker на хостах
+- Для `~/.omp` до включения синхронизации задай исключения: не переноси сессии,
+  историю, SQLite-базы и runtime-состояние. `~/config` обновляй через Git.
+- Для Minecraft: `main` — `/mnt/data/Games/Minecraft/Prism/instances`,
+  `laptop` — `~/.local/share/FreesmLauncher/instances`. Включи Ignore Permissions
+  на обеих сторонах из-за NTFS на ПК. Эти данные на NTFS не покрываются ZFS-снапшотами.
+- Перед сменой устройства закрой игру и дождись синхронизации.
+  Удаления распространяются между устройствами; живые миры безопасно не объединяются.
 
-На `main` и `laptop` включён штатный `virtualisation.docker.rootless` с
-`setSocketVariable = true`. Системный rootful-демон отключён, пользователь больше
-не добавляется в группу `docker`. `linger` запускает пользовательский демон при
-загрузке и сохраняет его после выхода из сессии. Docker внутри агентской VM не меняется.
+## Графика laptop
 
-После `nh os switch ~/config` полностью выйди из пользовательской сессии и войди
-снова: обновятся группы и `DOCKER_HOST`. Проверка: `systemctl --user status docker`
-и `docker info` — среди Security Options должен быть `rootless`. Для текущего
-терминала сокет можно выбрать явно:
-
-```bash
-export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
-```
-
-Docker использует стандартный путь `~/.local/share/docker`, но impermanence
-отдельно bind-монтирует его из `/var/lib/docker/home/<юзер>/.local/share/docker`.
-Физически образы, контейнеры и volumes находятся на существующем датасете
-`zroot/docker`, а не на `/persistent`. Датасет монтируется в initrd через
-`neededForBoot`; создание пользовательского каталога и его права `0700`
-обеспечивает impermanence. Его автоматические ZFS-снапшоты по-прежнему отключены.
-Старые rootful-данные в `/var/lib/docker` остаются нетронутыми и автоматически
-не мигрируют.
-
-Нативный Docker storage driver `zfs` не поддерживает rootless. Хранилище остаётся
-на файловой системе ZFS, но слои больше не являются отдельными ZFS-датасетами.
-Docker выбирает поддерживаемый backend автоматически; проверочный запуск
-Docker 29.8.1 на `main` использовал containerd snapshotter `overlayfs`.
-
-Обычные `docker` и Compose работают без sudo. По умолчанию нельзя публиковать
-хостовые порты ниже 1024: используй, например, `8080:80`. `--privileged` не даёт
-root-права на хосте; доступ к устройствам и права non-root пользователей
-контейнера на bind mounts требуют отдельной проверки. Ограничения:
-[Docker Rootless](https://docs.docker.com/engine/security/rootless/troubleshoot/#known-limitations).
-
-## Синхронизация main ↔ laptop
-
-Nix управляет службой, сетью и исключениями OMP. Устройства и общие
-папки добавляются один раз через GUI Syncthing — Device ID в Nix не записываются.
-`overrideDevices = false` и `overrideFolders = false` сохраняют эти настройки;
-деклараций `settings.devices` и `settings.folders` нет, поэтому rebuild
-не перезаписывает участников папок. Для первоначальной настройки используются:
-
-- SSH: `~/.ssh`, включая ключи. Права файлов сохраняются, каталог — `0700`.
-- Minecraft: на ПК `/mnt/data/Games/Minecraft/Prism/instances`, на ноутбуке
-  `~/.local/share/FreesmLauncher/instances`. Настройки лаунчера не изменяются,
-  каталоги не переносятся. В GUI включи Ignore Permissions для этой папки
-  на обеих машинах, поскольку исходный диск — NTFS.
-- OMP: `~/.omp`. Декларативный `.stignore` содержит разрешённые настройки,
-  инструкции и плагины; сессии, история, SQLite-базы и runtime-состояние исключены.
-
-`~/.omp/.stignore` управляется Home Manager: его правила меняются в Nix,
-не в GUI Syncthing. Служба ждёт успешной активации Home Manager, поэтому
-исключения присутствуют до первого сканирования. `UMask=0077` задаёт закрытые
-права при создании; при включённой синхронизации прав Syncthing затем применяет
-права источника. Правил tmpfiles и пользовательских скриптов нет.
-На `main` служба требует монтирования `/mnt/data`: у диска стоит `nofail`,
-поэтому без этой зависимости возможен запуск до появления инстансов.
-Локальное обнаружение, без глобального discovery, relay и NAT traversal.
-Стандартные порты: TCP/UDP 22000 и UDP 21027. GUI: `http://127.0.0.1:8384`.
-После пейринга оба устройства равноправны; удаления распространяются в обе стороны.
-
-Перед сменой устройства закрой Minecraft и дождись завершения синхронизации.
-Живые миры нельзя безопасно объединять. Инстансы на NTFS у ПК **не покрываются
-ZFS-снапшотами**. Пути Java в существующих инстансах могут требовать настройки
-на ноутбуке; Syncthing не переписывает содержимое конфигов.
-
-Syncthing сам создаёт и хранит сертификат, приватный ключ и базу в
-`~/.local/state/syncthing`. Каталог уже сохраняется impermanence и не
-синхронизируется. Передавать ключи между машинами не нужно.
-`services.syncthing.configDir` задан явно: смена `user` сама по себе не меняет
-стандартный путь `/var/lib/syncthing/.config/syncthing`, который обычный
-пользователь создать не может. База по умолчанию использует тот же `configDir`.
-
-Первичный пейринг:
-
-1. Примени конфиг на обоих устройствах. Syncthing запускается без заранее
-   подготовленных ключей; существующая идентичность сохраняется.
-2. На ноутбуке открой `http://127.0.0.1:8384` → Actions → Show ID.
-3. На ПК открой тот же локальный адрес → Add Remote Device и вставь ID ноутбука.
-   На ноутбуке подтверди подключение ПК, сверив его ID через Actions → Show ID.
-4. На ПК через Add Folder добавь три каталога из списка выше, выбери Send & Receive
-   и отметь ноутбук на вкладке Sharing. Для SSH в Ignore Patterns укажи
-   `/{agent,controlmasters,sockets}` и `known_hosts.old`; для Minecraft —
-   `(?d){logs,crash-reports,natives,.cache,session.lock}` и Ignore Permissions.
-5. На ноутбуке прими приглашения папок и выбери соответствующие локальные пути.
-   Folder ID оставь из приглашения. Для Minecraft также включи Ignore Permissions
-   и те же исключения; для SSH — те же исключения. Исключения OMP уже созданы Nix.
-
-Дальше настройки устройств, папок и их участников сохраняет Syncthing в своём
-локальном состоянии. Повторно редактировать Nix-конфиг для пейринга не нужно.
-Приватные ключи самого Syncthing между устройствами не копируются и в публичный Git не попадают.
-Проверка: `systemctl status syncthing syncthing-init` и GUI.
-
-## Подпись коммитов GPG
-
-На `main` и `laptop` Home Manager устанавливает GnuPG и gpg-agent с Qt-запросом
-пароля, включает подпись коммитов и тегов. Ключ выбирается по email из Git-конфига.
-Настройки подписи находятся в `common/home/git.nix` и применяются при включённом
-`programs.gpg.enable`. Агентская VM использует эти же настройки и подписывает
-через ограниченный сокет хостового gpg-agent; приватные ключи остаются на хосте.
-Применение и проверка описаны в `agent/README.md`, раздел «Git и подпись GPG».
-
-После `nh os switch` импортируй приватный ключ через `gpg --import /путь/к/key.asc`
-или создай новый с парольной фразой:
-
-```bash
-gpg --quick-generate-key 'Spliterash <me@spliterash.ru>' ed25519 sign 2y
-gpg --armor --export me@spliterash.ru
-```
-
-Публичный ключ добавь в GitHub → Settings → SSH and GPG keys → New GPG key;
-email ключа должен быть подтверждён в аккаунте. Пока приватного ключа нет,
-подписанные коммиты не создаются. `~/.gnupg` сохраняется в `/persistent` с правами
-`0700`; приватный ключ и сертификат отзыва резервируй отдельно, не клади в Git
-или Nix store. Проверка подписи последнего коммита: `git verify-commit HEAD`.
-
-## Установка по сети с main (nixos-anywhere) — как реально ставился laptop
-
-`laptop` ставился не локально, а удалённо с `main`: система собирается на
-`main`, по LAN на ноут копируется только результат (closure). Ноут при этом
-загружен с NixOS live-ISO с доступом по SSH (root, пароль установщика).
-
-Важно: disko **стирает весь SSD ноутбука**, создаёт ESP (2 GiB, `/boot`) и
-раздел под ZFS, оставляя около 100 GiB (107,4 GB) незанятыми под Windows.
-Первоначальная установка занимала весь диск; уменьшить существующий ZFS
-на месте нельзя. Изменение конфига и `nixos-rebuild` сами диск не переразмечают.
-
-Перед стиранием проверь на live-системе, что это именно ноутбук и нужный SSD:
-```bash
-ssh root@<ip> 'hostname; lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINTS,MODEL; readlink -f /dev/disk/by-id/nvme-Micron_MTFDHBA512QFD_20432B2E2878'
-```
-
-1. С `main` поставь ssh-ключ на ноут и сними реальный hardware-config:
-   ```bash
-   ssh-copy-id root@<ip>
-   ssh root@<ip> 'nixos-generate-config --no-filesystems --show-hardware-config' \
-     > laptop/system/hardware-configuration.nix
-   ```
-2. Собери diskoScript на `main` и скопируй его closure на ноут:
-   ```bash
-   P=$(nix build .#nixosConfigurations.laptop.config.system.build.diskoScript --print-out-paths --no-link)
-   nix copy --to ssh://root@<ip> --no-check-sigs "$P"
-   ```
-3. Прогони disko на ноуте, **подав пароль шифрования в stdin** (см. грабли).
-   В Bash введи пароль интерактивно, не записывая его в историю команд:
-   ```bash
-   read -r -s -p 'Пароль ZFS (не менее 8 символов): ' PASSPHRASE; printf '\n'
-   printf '%s\n%s\n' "$PASSPHRASE" "$PASSPHRASE" | ssh root@<ip> "$P"
-   unset PASSPHRASE
-   ```
-   Диск размечен, пул создан и смонтирован в `/mnt`.
-4. Установи систему (сборка на `main`, копия на ноут) и перезагрузи:
-   ```bash
-   nix run github:nix-community/nixos-anywhere -- --flake .#laptop --phases install,reboot --target-host root@<ip>
-   ```
-
-После установки NixOS загрузи установщик Windows в режиме UEFI и выбери
-незанятое место в конце диска. Разделы EFI и ZFS не удаляй и не форматируй.
-Windows создаст свои разделы в свободном месте; при смене порядка загрузки
-верни Linux Boot Manager первым в UEFI. Systemd-boot обнаруживает Windows
-Boot Manager на общем ESP. Secure Boot должен оставаться выключенным:
-подписанная загрузка NixOS в этом конфиге не настроена.
-
-### Грабли (проверено на практике)
-
-- **Пароль ZFS ≥ 8 символов** — короче ZFS не примет, `zpool create` упадёт.
-- **`keylocation=prompt` + nixos-anywhere.** При запуске напрямую из терминала
-  актуальный nixos-anywhere выделяет SSH TTY и запускает disko в нём: пароль
-  ZFS вводится в терминале запускающего компьютера, не на экране ноутбука.
-  Не перенаправляй stdin установщика и не запускай его через пайп. Для
-  неинтерактивного запуска остаётся отдельный disko с передачей пароля в stdin
-  (шаг 3). Пароль в репозиторий не попадает, `keylocation` остаётся `prompt`.
-- **Чистый экспорт пула перед ребутом.** После ручного disko (шаг 3) пул
-  остаётся импортированным под hostid live-ISO. При `boot.zfs.forceImportRoot
-  = false` установленная система откажется импортировать «чужой» пул и упадёт
-  в initrd с ошибкой монтирования zpool. Фаза `reboot` в шаге 4 экспортирует
-  пул сама; но если ребутишь **вручную** — сначала:
-  ```bash
-  umount /mnt/boot        # снять вложенный ESP, иначе пул «busy»
-  zpool export zroot
-  ```
-  Проверить: `zpool import` должен показывать пул как импортируемый по имени
-  без предупреждений о hostid и без `-f`.
-- **`Failed to install bootloader`.** `extraInstallCommands` в
-  `common/system/boot-generations.nix` вызывает `git log` по `programs.nh.flake` —
-  в свежей системе репозитория там ещё нет, git падает, и под `set -e` это
-  роняло весь установщик загрузчика (вывод git скрыт `2>/dev/null`). Git-вызов
-  сделан нефатальным (`|| true`). Загрузке это не мешало (boot-файлы к тому
-  моменту уже установлены), но ломало `nixos-install`/`nixos-rebuild`.
-- **Firefox: поисковики есть, расширений нет, `ERROR_CORRUPT_FILE`.** URL вида
-  `https://addons.mozilla.org/en-US/firefox/downloads/latest/.../latest.xpi`
-  может вернуть HTML-страницу проверки с HTTP 200 вместо XPI. В
-  `common/home/soft/furryfox/default.nix` используются загрузочные URL без
-  `/en-US/`: `https://addons.mozilla.org/firefox/downloads/latest/.../latest.xpi`.
-  После применения конфига полностью перезапусти Firefox; профиль удалять не нужно.
-- **Sidebery без дополнительной панели кнопок Firefox.** В общем профиле задано
-  `sidebar.visibility = "hide-launcher"`: панель кнопок скрыта, сама Sidebery
-  остаётся доступной. Настройка действует на обоих хостах и в профиле «Амиго».
-  TWP — Translate Web Pages устанавливается общей политикой расширений.
-
-## Что дальше по месту
-
-Хосту `laptop` специально закомментированы модули, включаемые вручную по
-необходимости (`laptop/system/default.nix`, `laptop/home/default.nix`) — сейчас
-там ничего лишнего не закомментировано, т.к. gaming-стек (docker/wine/steam/
-sunshine/xbox/vm) уже общий для всех хостов. Если на ноуте что-то из этого не
-нужно — убирай точечно из `common/system/default.nix` или переопределяй в
-`laptop/system/default.nix`.
-
-На Lenovo 82EY проверены AMD Renoir (`05:00.0`) и NVIDIA GTX 1650 (`01:00.0`).
-Встроенный экран eDP подключён к AMD, HDMI — к NVIDIA. В
-`laptop/system/gpu.nix` задан ранний `amdgpu` для Plymouth и PRIME offload
-с этими PCI-адресами; запуск приложения на дискретной карте:
-`nvidia-offload <команда>`.
-
-Для GTX 1650 выбран закрытый модуль NVIDIA без GSP, включены RTD3 и
-сохранение видеопамяти при сне. У открытого модуля RTD3 поддерживается только
-на Ampere и новее — см. [ограничения NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/595.45.04/README/kernel_open.html).
-При замене ноутбука или смене режима GPU в BIOS заново проверь PCI-адреса
-и подключение экрана. После установки проверь графический запрос ZFS,
-цикл сон/пробуждение и HDMI на железе. NVIDIA может оставаться активной,
-пока приложение использует её или к HDMI подключён монитор.
-Гибернация не настроена: текущий ZFS-конфиг добавляет `nohibernate`, swap отсутствует.
+Встроенный экран подключён к AMD, HDMI — к NVIDIA. Запуск на дискретной карте:
+`nvidia-offload <команда>`. PCI-адреса и драйвер заданы в `laptop/system/gpu.nix`;
+при смене железа или режима GPU в BIOS их нужно перепроверить.
+После изменений графики проверяй запрос пароля ZFS, сон/пробуждение и HDMI на ноутбуке.
