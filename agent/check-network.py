@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import signal
 import subprocess
 import sys
@@ -79,7 +80,7 @@ def stop_proxy(network):
 @contextlib.contextmanager
 def process(command, log):
     with log.open("w") as output:
-        child = subprocess.Popen(command, stdout=output, stderr=output)
+        child = subprocess.Popen(command, stdout=output, stderr=output, start_new_session=True)
         try:
             yield child
         finally:
@@ -201,6 +202,21 @@ def test(runtime, temporary):
                 assert run("ip", "link", "show", "avm0", check=False).returncode != 0, "host link leaked after stop"
                 assert json.loads(run("ip", "-j", "route", "show", LAN + "/32").stdout) == [], "host route leaked after stop"
 
+        stop_commands = json.loads((runtime / "stop-post.json").read_text())
+        for attempt in range(2):
+            with process([str(runner), "sleep", "300"], temporary / f"crash-{attempt}.log") as network:
+                wait_for(lambda: run("ip", "-n", "avm", "link", "show", "tun0", check=False).returncode == 0)
+                assert network.poll() is None, "network runner exited before crash"
+                os.killpg(network.pid, signal.SIGKILL)
+                network.wait(timeout=5)
+            assert Path("/run/netns/avm-host").exists(), "crash did not leave the host namespace alias"
+            for command in stop_commands:
+                run(*shlex.split(command.lstrip("-+")), check=False)
+            assert not Path("/run/netns/avm").exists(), "guest namespace leaked after crash"
+            assert not Path("/run/netns/avm-host").exists(), "host namespace alias leaked after crash"
+            wait_for(lambda: run("ip", "link", "show", "avm0", check=False).returncode != 0)
+        print("lan crash: SIGKILL cleanup and subsequent network startup succeeded", flush=True)
+
 
 def main():
     if len(sys.argv) == 3 and sys.argv[1] == "--inside":
@@ -230,6 +246,8 @@ in pkgs.linkFarm "avm-network-check" [
   { name = "proxy.json"; path = network.proxyConfig; }
   { name = "vm.json"; path = pkgs.writeText "avm-vm.json" (builtins.toJSON vm); }
   { name = "dnsmasq"; path = pkgs.dnsmasq; }
+  { name = "stop-post.json"; path = pkgs.writeText "avm-stop-post.json"
+      (builtins.toJSON f.nixosConfigurations.main.config.systemd.services."microvm@agent".serviceConfig.ExecStopPost); }
 ]
 '''
     result = subprocess.check_output(["nix", "build", "--impure", "--no-link", "--print-out-paths",

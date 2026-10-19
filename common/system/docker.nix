@@ -1,12 +1,16 @@
 { username, ... }: {
-  virtualisation.docker = {
+  virtualisation.docker.rootless = {
     enable = true;
-    storageDriver = "zfs";
+    setSocketVariable = true;
   };
 
-  users.users.${username} = {
-    extraGroups = [
-      "docker"
-    ];
-  };
+  users.users.${username}.linger = true;
+
+  fileSystems."/var/lib/docker".neededForBoot = true;
+  environment.persistence."/var/lib/docker".users.${username}.directories = [
+    {
+      directory = ".local/share/docker";
+      mode = "0700";
+    }
+  ];
 }

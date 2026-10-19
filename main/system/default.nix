@@ -13,6 +13,11 @@
   networking.hostName = "main";
   system.stateVersion = "25.11";
 
+  zramSwap = {
+    enable = true;
+    memoryPercent = 50;
+  };
+
   services.pipewire.extraConfig.pipewire = {
     "10-fix-popping" = {
       #? https://ventureo.codeberg.page/source/sound.html#choppy-audio

@@ -26,6 +26,7 @@ in
     hypervisor = "qemu";
     vcpu = 4;
     mem = 26624;
+    balloon = true;
 
     vsock.cid = vm.vsockCid;
     vsock.ssh.enable = true;

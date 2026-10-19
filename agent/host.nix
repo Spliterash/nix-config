@@ -179,7 +179,10 @@ in
       "+${lib.getExe network.start} /var/lib/microvms/${vm.name}/current/bin/microvm-run"
     ];
     KillMode = "mixed";
-    ExecStopPost = [ "-+${lib.getExe' pkgs.iproute2 "ip"} netns delete avm" ];
+    ExecStopPost = [
+      "-+${lib.getExe' pkgs.iproute2 "ip"} netns delete avm"
+      "-+${lib.getExe' pkgs.iproute2 "ip"} netns delete avm-host"
+    ];
   };
 
   systemd.sockets.avm-nix-daemon = {

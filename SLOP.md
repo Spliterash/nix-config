@@ -56,6 +56,10 @@ layout — ESP 2 GiB, раздел под ZFS и около 100 GiB незаня
   Breeze; для графической формы нужен работающий видеовывод в initrd.
 - Если рядом стоит Windows на том же диске — сначала ставь/оставь Windows,
   EFI-раздел общий на оба ОС.
+- На `main` включена zram-подкачка объёмом 50% RAM (`main/system/default.nix`):
+  страницы сжимаются в оперативной памяти, дисковый swap не создаётся.
+  Это запас для сжимаемых данных, а не гарантия от OOM. Проверка после применения:
+  `swapon --show` и `zramctl`.
 
 ## 1. Загрузка установщика
 
@@ -159,6 +163,42 @@ sudo nixos-install --flake .#<имя> --root /mnt
 
 Конфиг в `/home/<юзер>/config` обновляется вручную через Git; этот каталог
 не синхронизируется Syncthing.
+
+## Docker на хостах
+
+На `main` и `laptop` включён штатный `virtualisation.docker.rootless` с
+`setSocketVariable = true`. Системный rootful-демон отключён, пользователь больше
+не добавляется в группу `docker`. `linger` запускает пользовательский демон при
+загрузке и сохраняет его после выхода из сессии. Docker внутри агентской VM не меняется.
+
+После `nh os switch ~/config` полностью выйди из пользовательской сессии и войди
+снова: обновятся группы и `DOCKER_HOST`. Проверка: `systemctl --user status docker`
+и `docker info` — среди Security Options должен быть `rootless`. Для текущего
+терминала сокет можно выбрать явно:
+
+```bash
+export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
+```
+
+Docker использует стандартный путь `~/.local/share/docker`, но impermanence
+отдельно bind-монтирует его из `/var/lib/docker/home/<юзер>/.local/share/docker`.
+Физически образы, контейнеры и volumes находятся на существующем датасете
+`zroot/docker`, а не на `/persistent`. Датасет монтируется в initrd через
+`neededForBoot`; создание пользовательского каталога и его права `0700`
+обеспечивает impermanence. Его автоматические ZFS-снапшоты по-прежнему отключены.
+Старые rootful-данные в `/var/lib/docker` остаются нетронутыми и автоматически
+не мигрируют.
+
+Нативный Docker storage driver `zfs` не поддерживает rootless. Хранилище остаётся
+на файловой системе ZFS, но слои больше не являются отдельными ZFS-датасетами.
+Docker выбирает поддерживаемый backend автоматически; проверочный запуск
+Docker 29.8.1 на `main` использовал containerd snapshotter `overlayfs`.
+
+Обычные `docker` и Compose работают без sudo. По умолчанию нельзя публиковать
+хостовые порты ниже 1024: используй, например, `8080:80`. `--privileged` не даёт
+root-права на хосте; доступ к устройствам и права non-root пользователей
+контейнера на bind mounts требуют отдельной проверки. Ограничения:
+[Docker Rootless](https://docs.docker.com/engine/security/rootless/troubleshoot/#known-limitations).
 
 ## Синхронизация main ↔ laptop
 
