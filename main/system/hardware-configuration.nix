@@ -37,12 +37,13 @@
 
   fileSystems."/mnt/data" = {
     device = "/dev/disk/by-uuid/FAEE5F35EE5EEA01";
-    fsType = "ntfs";
+    fsType = "ntfs3";
     options = [
       "rw"
       "uid=1000"
       "gid=100"
       "nofail"
+      "x-systemd.before=local-fs.target"
     ];
   };
 
