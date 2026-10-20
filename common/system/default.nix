@@ -49,9 +49,6 @@
       "networkmanager"
       "wheel"
     ];
-    packages = with pkgs; [
-      kdePackages.kate
-    ];
   };
 
   programs.nh.enable = true;
