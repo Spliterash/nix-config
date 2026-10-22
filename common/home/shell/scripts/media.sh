@@ -66,13 +66,14 @@ ffmp4() {
            "$@" \
            "$output"
 }
-# Скачивание аудио с обложкой и конвертация в опус
+# Скачивание аудио в текущий каталог и конвертация в опус с квадратной обложкой без чёрных полей
 alias yta='yt-dlp \
 --embed-thumbnail \
+--exec "before_dl:python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/shell/yta-cover.py\" %(thumbnails.-1.filepath|)q" \
 --embed-metadata \
 --embed-chapters \
 --extract-audio \
 --audio-format opus \
 --audio-quality 10 \
 --trim-filenames 248 \
---output "%(artist,channel,album_artist,uploader)s/%(album)s/%(track,title,track_id)s - [%(id)s].%(ext)s"'
+--output "%(track,title,track_id)s - [%(id)s].%(ext)s"'
