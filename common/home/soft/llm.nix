@@ -9,6 +9,7 @@ in
   home.packages = [
     llm.opencode
     llm.omp
+    llm.openspecui
     # Чтобы не ломались плагины
     (llm.pi.override { useBun = false; })
   ];
