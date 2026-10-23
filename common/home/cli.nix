@@ -16,5 +16,6 @@ in
     llm.claude-code
     llm.codex
     llm.openspec
+    llm.openspecui
   ];
 }

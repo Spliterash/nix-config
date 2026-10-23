@@ -34,7 +34,8 @@ avm logs proxy       # лог внешнего sing-box
 
 Хосты и AVM используют `common/system/cli.nix`: настройки Nix, comma с готовой
 базой nix-index, Zsh, Git, jq, Java, Node.js, Bun, Python и интеграцию Home Manager.
-`common/home/cli.nix` объединяет настройки shell, Git, fzf, Yazi и пакеты Claude/Codex.
+`common/home/cli.nix` объединяет настройки shell, Git, fzf, Yazi и пакеты
+Claude/Codex, OpenSpec (`openspec`) и OpenSpec UI (`openspecui`).
 Рабочий стол остаётся в хостовых модулях; прокидывание daemon/GPG и особенности VM —
 в `agent/default.nix`.
 
