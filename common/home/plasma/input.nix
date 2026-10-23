@@ -11,10 +11,11 @@
         { layout = "us"; }
         { layout = "ru"; }
       ];
-      # Win+Space toggles the group (Windows 10/11 default; matches vladik's
-      # config). No Alt in the combo, so apps never see a lone Alt → no menu
+      # Win+Space and Caps Lock toggle the group (Win+Space matches vladik's
+      # config and Windows 10/11). No Alt in the combo, so apps never see a lone Alt → no menu
       # activation / focus loss, and a held Shift keeps capitalising after a switch.
-      options = [ "grp:win_space_toggle" ];
+      # Caps Lock LED: off for English, on for Russian.
+      options = [ "grp:win_space_toggle" "grp:caps_toggle" "grp_led:caps" ];
       switchingPolicy = "global";
       # NumLock включён при старте сессии (kcminputrc [Keyboard] NumLock).
       # SDDM-настройка ниже отвечает только за экран входа; сессия Plasma при
