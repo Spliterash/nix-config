@@ -18,8 +18,8 @@
     ./gpu-screen-recorder.nix
   ];
 
-  # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # Use the latest kernel branch supported by ZFS 2.4 (7.2 is not LTS).
+  boot.kernelPackages = pkgs.linuxPackages_7_2;
 
   # Enable networking
   networking.networkmanager.enable = true;
