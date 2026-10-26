@@ -66,9 +66,11 @@ ffmp4() {
            "$@" \
            "$output"
 }
-# Скачивание аудио в текущий каталог и конвертация в опус с квадратной обложкой без чёрных полей
+# Скачивание аудио в текущий каталог и конвертация в опус с центральной квадратной обрезкой обложки
+# PNG перед обрезкой исключает повторное сжатие с потерями, особенно WebP с JPEG-параметрами качества.
 alias yta='yt-dlp \
 --embed-thumbnail \
+--convert-thumbnails png \
 --exec "before_dl:python3 \"${XDG_CONFIG_HOME:-$HOME/.config}/shell/yta-cover.py\" %(thumbnails.-1.filepath|)q" \
 --embed-metadata \
 --embed-chapters \

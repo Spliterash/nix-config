@@ -215,6 +215,9 @@ in
             [ -e "$guest" ] || touch "$guest"
           fi
           mount --bind "$source" "$guest"
+          if [[ $name == *:ro ]]; then
+            mount -o remount,bind,ro "$guest"
+          fi
         done
 
       mv $state.new $state

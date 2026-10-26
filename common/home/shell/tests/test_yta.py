@@ -35,11 +35,14 @@ def test_yta():
         try:
             base = f'http://127.0.0.1:{server.server_port}'
             cases = [
-                ('padded.jpg', 'color=black:s=480x360,drawbox=x=112:y=52:w=256:h=256:color=white:t=fill', 256),
+                ('padded.jpg', 'color=black:s=480x360,drawbox=x=112:y=52:w=256:h=256:color=white:t=fill', 360),
                 ('landscape.webp', 'color=white:s=480x360,drawbox=x=0:y=0:w=60:h=360:color=red:t=fill,drawbox=x=420:y=0:w=60:h=360:color=blue:t=fill', 360),
                 ('portrait.png', 'color=white:s=320x480,drawbox=x=0:y=0:w=320:h=80:color=red:t=fill,drawbox=x=0:y=400:w=320:h=80:color=blue:t=fill', 320),
                 ('square.jpg', 'color=white:s=300x300', 300),
                 ('black.png', 'color=black:s=480x360', 360),
+                ('black-background.png', 'color=black:s=480x270,drawbox=x=136:y=98:w=208:h=22:color=white:t=fill,drawbox=x=184:y=152:w=108:h=14:color=white:t=fill', 270),
+                ('detailed.webp', 'testsrc2=s=300x300', 300),
+                ('detailed.jpg', 'testsrc2=s=300x300', 300),
                 (None, None, None),
             ]
             for index, (thumbnail, image, side) in enumerate(cases):
@@ -76,10 +79,21 @@ def test_yta():
                         'ffmpeg', '-v', 'error', '-i', str(files[0]), '-map', '0:v:0',
                         '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-',
                     ])
-                    expected = 0 if thumbnail == 'black.png' else 255
-                    for x, y in [(4, 4), (side // 2, side // 2), (side - 5, side - 5)]:
-                        offset = (y * side + x) * 3
-                        assert all(abs(value - expected) < 12 for value in pixels[offset:offset + 3])
+                    source = root / thumbnail
+                    width, height = map(int, run(
+                        'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                        '-show_entries', 'stream=width,height', '-of', 'csv=p=0:s=x', str(source),
+                    ).strip().split('x'))
+                    original = subprocess.check_output([
+                        'ffmpeg', '-v', 'error', '-i', str(source),
+                        '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-',
+                    ])
+                    left, top = (width - side) // 2, (height - side) // 2
+                    expected = b''.join(
+                        original[((top + y) * width + left) * 3:((top + y) * width + left + side) * 3]
+                        for y in range(side)
+                    )
+                    assert pixels == expected, f'{thumbnail}: embedded cover is not an unchanged center crop'
                 else:
                     assert not covers, covers
                 print(f'OK: {thumbnail or "no thumbnail"}; cover={side}; flat output')
