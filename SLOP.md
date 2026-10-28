@@ -7,6 +7,9 @@
 - `main/` и `laptop/` — настройки конкретного хоста, также разделены на `system/` и `home/`.
 - `common/packages/` — собственные пакеты.
 - Агентская VM: [agent/README.md](agent/README.md).
+- MIME-ассоциации — `xdg.mime.defaultApplications` в `common/system/default.nix`:
+  `text/*`, JSON, YAML, TOML, XML и скрипты открываются в VS Code. NixOS разворачивает
+  MIME-маски при сборке; PDF, изображения, архивы и ссылки сохраняют свои приложения.
 
 Рабочая копия ожидается в `~/config`. Применение на текущем хосте:
 

@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ pkgs, lib, username, ... }:
 {
   imports = [
     ./cli.nix
@@ -56,9 +56,32 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  xdg.mime.defaultApplications = {
-    "text/plain" = [ "code.desktop" ];
-  };
+  xdg.mime.defaultApplications = lib.genAttrs [
+    "text/*"
+    "application/json"
+    "application/json5"
+    "application/*+json"
+    "application/yaml"
+    "application/*+yaml"
+    "application/toml"
+    "application/xml"
+    "application/xml-dtd"
+    "application/xml-external-parsed-entity"
+    "application/xsd"
+    "application/xslt+xml"
+    "application/sql"
+    "application/javascript"
+    "application/ecmascript"
+    "application/typescript"
+    "application/x-shellscript"
+    "application/x-fishscript"
+    "application/x-nuscript"
+    "application/x-powershell"
+    "application/x-perl"
+    "application/x-php"
+    "application/x-ruby"
+    "application/x-zerosize"
+  ] (_: [ "code.desktop" ]);
   documentation.doc.enable = false;
 
   # List packages installed in system profile. To search, run:
