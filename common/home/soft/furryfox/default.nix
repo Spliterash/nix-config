@@ -60,6 +60,7 @@ in
       in
       builtins.listToAttrs [
         (extension "plasma-integration" "plasma-browser-integration@kde.org")
+        (extension "keepassxc-browser" "keepassxc-browser@keepassxc.org")
         (extension "pwas-for-firefox" "firefoxpwa@filips.si")
         (extension "sidebery" "{3c078156-979c-498b-8990-85f7987dd929}")
         (extension "ublock-origin" "uBlock0@raymondhill.net")

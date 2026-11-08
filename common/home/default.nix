@@ -29,6 +29,7 @@
     ./soft/llm.nix
     ./soft/furryfox
     ./soft/sourcegit.nix
+    ./soft/keepassxc.nix
     ./soft/vesktop.nix
     ./soft/freesm.nix
     ./soft/media.nix
