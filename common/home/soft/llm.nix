@@ -6,6 +6,8 @@ in
   home.packages = [
     llm.opencode
     llm.omp
+    llm.antigravity-cli
+    llm.antigravity-hub
     # Чтобы не ломались плагины
     (llm.pi.override { useBun = false; })
   ];

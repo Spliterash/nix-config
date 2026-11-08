@@ -67,6 +67,7 @@ in
         ".claude-mem"
         ".codex"
         ".cockpit_tools"
+        ".gemini"
         ".thunderbird"
         ".vscode"
         ".vscode-shared" # ? recent and trust folders
