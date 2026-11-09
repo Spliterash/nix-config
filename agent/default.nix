@@ -238,13 +238,14 @@ in
       HOME = "/home/${username}";
       PASEO_LISTEN = "0.0.0.0:6767";
       PASEO_RELAY_ENABLED = "false";
-      PASEO_WEB_UI_ENABLED = "true";
+      PASEO_WEB_UI_ENABLED = "false";
     };
     serviceConfig = {
       User = username;
       WorkingDirectory = "/home/${username}";
-      ExecStart =
-        "${lib.getExe config.users.users.${username}.shell} -lc 'exec ${lib.getExe' pkgs.paseo "paseo-server"}'";
+      ExecStart = "${
+        lib.getExe config.users.users.${username}.shell
+      } -lc 'exec ${lib.getExe' pkgs.paseo "paseo-server"}'";
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";

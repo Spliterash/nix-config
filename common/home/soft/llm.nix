@@ -7,6 +7,7 @@ in
     llm.opencode
     llm.omp
     pkgs.bubblewrap
+    pkgs.paseo.desktop
     llm.antigravity-cli
     llm.antigravity-hub
     # Чтобы не ломались плагины
