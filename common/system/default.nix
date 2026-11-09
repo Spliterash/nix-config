@@ -18,8 +18,8 @@
     ./gpu-screen-recorder.nix
   ];
 
-  # Use the latest kernel branch supported by ZFS 2.4 (7.2 is not LTS).
-  boot.kernelPackages = pkgs.linuxPackages_7_2;
+  # Zen currently provides the ZFS-compatible 7.2 branch; it is not LTS.
+  boot.kernelPackages = pkgs.linuxPackages_zen;
 
   # Enable networking
   networking.networkmanager.enable = true;

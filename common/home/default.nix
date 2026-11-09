@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   xdg.enable = true;
+  xdg.autostart.enable = true;
 
   programs.gpg.enable = true;
   programs.zellij = {
