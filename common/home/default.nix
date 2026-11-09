@@ -27,7 +27,6 @@
     ./soft/jetbrains/idea.nix
     ./soft/vscode
     ./soft/wezterm
-    ./soft/llm.nix
     ./soft/furryfox
     ./soft/sourcegit.nix
     ./soft/keepassxc.nix

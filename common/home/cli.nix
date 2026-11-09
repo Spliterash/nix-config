@@ -1,7 +1,4 @@
-{ inputs, pkgs, ... }:
-let
-  llm = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
-in
+{ ... }:
 {
   imports = [
     ./shell/zsh.nix
@@ -10,12 +7,6 @@ in
     ./git.nix
     ./soft/yazi
     ./dev-tools.nix
-  ];
-
-  home.packages = [
-    llm.claude-code
-    llm.codex
-    llm.openspec
-    llm.openspecui
+    ./soft/llm.nix
   ];
 }

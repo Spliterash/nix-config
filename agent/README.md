@@ -34,8 +34,10 @@ avm logs proxy       # лог внешнего sing-box
 
 Хосты и AVM используют `common/system/cli.nix`: настройки Nix, comma с готовой
 базой nix-index, Zsh, Git, jq, Java, Node.js, Bun, Python и интеграцию Home Manager.
-`common/home/cli.nix` объединяет настройки shell, Git, fzf, Yazi и пакеты
-Claude/Codex, OpenSpec (`openspec`) и OpenSpec UI (`openspecui`).
+`common/home/cli.nix` объединяет настройки shell, Git, fzf, Yazi и подключает
+`common/home/soft/llm.nix`: общий для хостов и AVM набор Claude/Codex, OpenSpec,
+OpenSpec UI, OpenCode, OMP, Antigravity CLI/Hub, Pi и bubblewrap.
+OMP берётся из одного закреплённого `llm-agents` input; проверить запуск — `avm ssh omp --version`.
 Рабочий стол остаётся в хостовых модулях; прокидывание daemon/GPG и особенности VM —
 в `agent/default.nix`.
 
@@ -74,7 +76,7 @@ free-page-reporting: свободные страницы гостя могут �
 и сессии сохраняются в `~/.paseo` на гостевом диске. Закрытие SSH или клиента
 не останавливает агент. Старые данные T3 Code не удаляются и не переносятся в Paseo.
 
-На хосте через общий Home Manager-модуль `common/home/soft/llm.nix` установлен
+На хосте через Home Manager-модуль `common/home/soft/packages.nix` установлен
 `pkgs.paseo.desktop`: приложение **Paseo** в меню KDE и команда `paseo-desktop`,
 без локальных переопределений сборки.
 В VM остаётся headless-агент; веб-интерфейс отключён через
