@@ -7,7 +7,13 @@
   ...
 }:
 {
+  imports = [ inputs.nix-obtainium.nixosModules.default ];
+
   nix = {
+    obtainium = {
+      enable = true;
+      flake = inputs.self;
+    };
     package = lib.mkDefault pkgs.nix;
     gc.automatic = false;
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];

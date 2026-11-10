@@ -7,7 +7,7 @@
     (callPackage ../../packages/sniffcraft.nix { })
     (callPackage ../../packages/cockpit-tools.nix { })
     atlas
-    photocraft
+    (callPackage ../../packages/photocraft.nix { })
   ];
   programs.libreoffice.enable = true;
 }

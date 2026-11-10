@@ -1,7 +1,7 @@
 {
   lib,
   stdenv,
-  fetchurl,
+  obtainium,
   dpkg,
   autoPatchelfHook,
   wrapGAppsHook3,
@@ -17,12 +17,7 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "cockpit-tools";
-  version = "1.3.80";
-
-  src = fetchurl {
-    url = "https://github.com/jlcodes99/cockpit-tools/releases/download/v${finalAttrs.version}/Cockpit.Tools_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-L91qQJkgMJYr8ZGmAy9jxCsEZ1OEiRkzGLjJf3fVOXo=";
-  };
+  inherit (obtainium.cockpit-tools) src version;
 
   nativeBuildInputs = [
     dpkg
@@ -38,6 +33,8 @@ stdenv.mkDerivation (finalAttrs: {
     glib-networking
   ];
 
+  # Вход лежит в store как "source" без .deb, хук dpkg его не распознаёт
+  unpackCmd = "dpkg -x $curSrc root";
   sourceRoot = "root";
   dontConfigure = true;
   dontBuild = true;

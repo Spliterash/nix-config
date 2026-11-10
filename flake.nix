@@ -45,6 +45,20 @@
       url = "github:microvm-nix/microvm.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-obtainium = {
+      url = "github:Spliterash/nix-obtainium";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Последние релизы с GitHub через nix-obtainium, версия фиксируется в flake.lock
+    cockpit-tools = {
+      url = "file+https://nix-obtainium.invalid/github/jlcodes99/cockpit-tools?asset=Cockpit.Tools_*_amd64.deb";
+      flake = false;
+    };
+    photocraft = {
+      url = "file+https://nix-obtainium.invalid/github/storytold/photocraft?asset=photocraft-*-linux-x86_64.deb";
+      flake = false;
+    };
   };
 
   outputs =

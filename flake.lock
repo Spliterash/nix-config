@@ -56,6 +56,18 @@
         "type": "github"
       }
     },
+    "cockpit-tools": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-Z8O6C7CW5nD/827+zAhpb3uj+v2IYIj3V4gwOAwsYQg=",
+        "type": "file",
+        "url": "https://github.com/jlcodes99/cockpit-tools/releases/download/v1.3.81/Cockpit.Tools_1.3.81_amd64.deb#1.3.81"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://nix-obtainium.invalid/github/jlcodes99/cockpit-tools?asset=Cockpit.Tools_%2A_amd64.deb"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1790899423,
@@ -372,6 +384,26 @@
         "type": "github"
       }
     },
+    "nix-obtainium": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794339591,
+        "narHash": "sha256-t3TKfz5pPpom0G42scvTMwcTrCCyOYkkMDJvrKJ2ARs=",
+        "owner": "Spliterash",
+        "repo": "nix-obtainium",
+        "rev": "503eeb982d2745af11c70f318bb4ee74bb6952dc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Spliterash",
+        "repo": "nix-obtainium",
+        "type": "github"
+      }
+    },
     "nixcord": {
       "inputs": {
         "home-manager": "home-manager_3",
@@ -453,6 +485,18 @@
         "type": "indirect"
       }
     },
+    "photocraft": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-9+P/gImaCLoh/eKcrUYyXcM8vsgm9hsSwqG8bJCr9IY=",
+        "type": "file",
+        "url": "https://github.com/storytold/photocraft/releases/download/v0.22.0/photocraft-0.22.0-linux-x86_64.deb#0.22.0"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://nix-obtainium.invalid/github/storytold/photocraft?asset=photocraft-%2A-linux-x86_64.deb"
+      }
+    },
     "plasma-manager": {
       "inputs": {
         "home-manager": [
@@ -479,6 +523,7 @@
     "root": {
       "inputs": {
         "bootvine": "bootvine",
+        "cockpit-tools": "cockpit-tools",
         "disko": "disko",
         "freesmlauncher": "freesmlauncher",
         "home-manager": "home-manager",
@@ -487,8 +532,10 @@
         "microvm": "microvm",
         "nix-index-database": "nix-index-database",
         "nix-jetbrains-plugins": "nix-jetbrains-plugins",
+        "nix-obtainium": "nix-obtainium",
         "nixcord": "nixcord",
         "nixpkgs": "nixpkgs_2",
+        "photocraft": "photocraft",
         "plasma-manager": "plasma-manager"
       }
     },
