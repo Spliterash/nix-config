@@ -5,6 +5,10 @@
   ...
 }:
 {
+  imports = [ inputs.bootvine.nixosModules.default ];
+
+  services.bootvine.enable = true;
+
   # Хеш коммита конфига в генерации (столбец Configuration Revision в
   # `nixos-rebuild list-generations`; также `nixos-version --configuration-revision`).
   # self.rev — чистый коммит (дерево закоммичено), dirtyRev — "<хеш>-dirty" при
