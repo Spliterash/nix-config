@@ -16,6 +16,7 @@
     ./vm.nix
     ./amneziawg.nix
     ./gpu-screen-recorder.nix
+    ./sync-backup.nix
   ];
 
   # Zen currently provides the ZFS-compatible 7.2 branch; it is not LTS.

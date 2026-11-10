@@ -35,6 +35,66 @@ nh os switch ~/config
   `~/.gnupg` сохраняется, но ключ и сертификат отзыва нужно резервировать отдельно.
   Не помещай их в Git или Nix store.
 
+## Бекап Sync в Google Drive
+
+`common/system/sync-backup.nix` включает на обоих хостах ежечасный бекап
+`~/Sync` через restic и rclone. Репозитории раздельные:
+`gdrive:backups/sync/main` и `gdrive:backups/sync/laptop`.
+Restic шифрует содержимое и имена файлов до отправки, хранит последние 20
+снимков каждого хоста и удаляет ненужные данные без корзины Google Drive.
+Без изменений новый снимок не создаётся; проверка запускается каждый час.
+Это 20 состояний всей папки, не 20 версий каждого файла и не лимит в байтах.
+
+Авторизация и пароль находятся только в локальных файлах:
+
+- `~/.config/rclone/rclone.conf` — OAuth-токен Google Drive;
+- `~/.config/restic/sync-password` — пароль шифрования restic.
+
+В Nix передаются только пути строками: содержимое секретов не попадает в Git
+или Nix store. `~/.config` уже сохраняется через impermanence. Пока одного из
+файлов нет, systemd пропускает запуск бекапа.
+
+Примени конфиг: `nh os switch "path:$HOME/config"`. Префикс `path:` включает
+новый модуль, даже если он ещё не добавлен в индекс Git.
+Затем на каждом хосте выполни от обычного пользователя:
+
+```bash
+umask 077
+mkdir -p ~/.config/rclone ~/.config/restic
+chmod 700 ~/.config/rclone ~/.config/restic
+rclone config --config "$HOME/.config/rclone/rclone.conf"
+chmod 600 ~/.config/rclone/rclone.conf
+
+if [ ! -e "$HOME/.config/restic/sync-password" ]; then
+  dd if=/dev/urandom bs=32 count=1 status=none | base64 > "$HOME/.config/restic/sync-password"
+fi
+chmod 600 ~/.config/restic/sync-password
+```
+
+В `rclone config` создай remote **`gdrive`** типа **Google Drive** и пройди
+авторизацию в браузере. Используй собственный Google OAuth client ID:
+общий client ID rclone выводится из эксплуатации в 2026 году.
+Инструкция: <https://rclone.org/drive/#making-your-own-client-id>.
+Токену нужен доступ на запись и удаление; для отдельного бекапа подходит
+scope `drive.file`, ограничивающий доступ файлами, созданными приложением.
+
+Сохрани пароль restic отдельно от этого компьютера, например в менеджере
+паролей. Без него восстановить бекап нельзя. Не генерируй новый пароль
+для существующего репозитория; при переустановке верни сохранённый.
+
+Первый запуск автоматически создаёт зашифрованный репозиторий:
+
+```bash
+sudo systemctl start restic-backups-sync.service
+journalctl -u restic-backups-sync.service -n 50 --no-pager
+systemctl list-timers restic-backups-sync.timer
+restic-sync snapshots
+restic-sync restore latest --target "$HOME/Sync-restored"
+```
+
+`restic-sync` — штатная обёртка с теми же путями к секретам и репозиторию.
+Восстанавливай сначала в отдельную папку, не поверх рабочего `Sync`.
+
 ## Переустановка laptop с main
 
 **Disko стирает весь SSD, указанный в `laptop/system/disk-config.nix`, включая
