@@ -24,7 +24,12 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
-  programs.ssh.startAgent = true;
+  programs.ssh = {
+    startAgent = true;
+    # Без X11 enableAskPassword по умолчанию выключен, даже в Plasma Wayland.
+    enableAskPassword = true;
+    askPassword = "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
+  };
   programs.kdeconnect.enable = true;
   environment.plasma6.excludePackages = [ pkgs.kdePackages.kate ];
 }
