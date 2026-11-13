@@ -18,6 +18,9 @@ nh os build ~/config
 nh os switch ~/config
 ```
 
+Donut добавлен в `environment.systemPackages` из приложения `release-start`
+flake `donutbrowser`; команда запуска — `donut-release-start`.
+
 Ядро для `main` и `laptop` выбирается через `pkgs.linuxPackages` в
 `common/system/default.nix`: используется ядро по умолчанию из nixpkgs,
 обычно LTS. При обновлении nixpkgs ветка ядра может измениться.
