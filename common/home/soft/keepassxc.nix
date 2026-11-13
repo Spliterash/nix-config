@@ -8,6 +8,7 @@
       Browser = {
         Enabled = true;
         UpdateBinaryPath = false;
+        Browser_AllowLocalhostWithPasskeys = true;
       };
       GUI = {
         CheckForUpdates = false;
@@ -19,7 +20,8 @@
         Browser_AllowLocalhostWithPasskeys = true;
       };
       Security = {
-        LockDatabaseIdleSeconds=3600;
+        LockDatabaseIdleSeconds = 3600;
+        LockDatabaseScreenLock = false;
       };
       FdoSecrets.Enabled = true;
       SSHAgent.Enabled = true;
