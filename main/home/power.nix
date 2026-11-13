@@ -24,7 +24,7 @@
       dimDisplay.enable = false;
       autoSuspend = {
         action = "shutDown";
-        idleTimeout = 21600; # 6 часов
+        idleTimeout = 86400; # 24 часа
       };
     };
   };

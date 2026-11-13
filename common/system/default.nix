@@ -19,8 +19,8 @@
     ./sync-backup.nix
   ];
 
-  # Zen currently provides the ZFS-compatible 7.2 branch; it is not LTS.
-  boot.kernelPackages = pkgs.linuxPackages_zen;
+  # Use the default kernel rather than Zen, which can outpace ZFS support.
+  boot.kernelPackages = pkgs.linuxPackages;
 
   # Enable networking
   networking.networkmanager.enable = true;
