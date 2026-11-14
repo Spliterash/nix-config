@@ -2,7 +2,8 @@
 {
   systemd.user.services.telegram-priority = {
     Unit = {
-      Description = "Pause media while Telegram plays audio";
+      Description = "Pause media while Telegram plays or records audio";
+      PartOf = [ "pipewire.service" ];
       After = [ "pipewire.service" ];
     };
     Service = {

@@ -1,6 +1,15 @@
 {
   imports = [ ./telegram-priority ];
 
+  xdg.configFile."wireplumber/wireplumber.conf.d/10-ayugram-volume.conf".text = builtins.toJSON {
+    "stream.rules" = [
+      {
+        matches = [ { "node.name" = "~.*[Aa]yu[Gg]ram.*"; } ];
+        actions.update-props."application.id" = "com.ayugram.desktop";
+      }
+    ];
+  };
+
   services.easyeffects.enable = true;
   services.easyeffects.extraPresets = {
     LoudnessEqualizer = builtins.fromJSON (

@@ -3,6 +3,7 @@ declare -A clients=() owners=() node_binary=() active=() paused=()
 pause_players() {
   local player status track
   while IFS= read -r player; do
+    [[ -n $player ]] || continue
     case "${player,,}" in
       *telegram*|*ayugram*|plasma-browser-integration) continue ;;
     esac
@@ -13,18 +14,21 @@ pause_players() {
       continue
     fi
     track=$(playerctl -p "$player" metadata mpris:trackid 2>/dev/null) || track=
-    if playerctl -p "$player" pause && [[ $(playerctl -p "$player" status 2>/dev/null) == Paused ]]; then
+    if playerctl -p "$player" pause; then
       paused[$player]=$track
     fi
   done < <(playerctl --list-all 2>/dev/null)
 }
 
 resume_players() {
-  local player track
+  local player status track
   for player in "${!paused[@]}"; do
-    track=$(playerctl -p "$player" metadata mpris:trackid 2>/dev/null) || track=
-    if [[ $(playerctl -p "$player" status 2>/dev/null) == Paused && $track == "${paused[$player]}" ]]; then
-      playerctl -p "$player" play || true
+    status=$(playerctl -p "$player" status 2>/dev/null) || continue
+    if [[ $status == Paused ]]; then
+      track=$(playerctl -p "$player" metadata mpris:trackid 2>/dev/null) || track=
+      if [[ -z $track || -z ${paused[$player]} || $track == "${paused[$player]}" ]]; then
+        playerctl -p "$player" play || continue
+      fi
     fi
     unset 'paused[$player]'
   done
@@ -73,7 +77,7 @@ done < <(
     if .info == null then [.id, "removed", "-", "-", "-", "-"] | @tsv
     elif .type == "PipeWire:Interface:Client" then
       [.id, "client", "-", (.info.props."application.process.binary" // .info.props."application.name" // "-"), "-", "-"] | @tsv
-    elif .type == "PipeWire:Interface:Node" and .info.props."media.class" == "Stream/Output/Audio" then
+    elif .type == "PipeWire:Interface:Node" and (.info.props."media.class" == "Stream/Output/Audio" or .info.props."media.class" == "Stream/Input/Audio") then
       [.id, "node", (.info.props."client.id" // "-"), (.info.props."application.process.binary" // .info.props."application.name" // "-"), (.info.state // "-"), (.info.props."pulse.corked" // false | tostring)] | @tsv
     else empty end
   '
