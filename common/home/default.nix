@@ -33,6 +33,7 @@
     ./soft/keepassxc.nix
     ./soft/vesktop.nix
     ./soft/freesm.nix
+    ./soft/donut.nix
     ./soft/media.nix
   ];
 }

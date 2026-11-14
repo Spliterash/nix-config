@@ -97,7 +97,6 @@
     nixfmt
     unrar
     keepassxc
-    (builtins.dirOf (builtins.dirOf inputs.donutbrowser.apps.${pkgs.stdenv.hostPlatform.system}.release-start.program))
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     #  wget
   ];
