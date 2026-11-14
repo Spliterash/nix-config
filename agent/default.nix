@@ -2,11 +2,13 @@
   config,
   lib,
   pkgs,
+  inputs,
   username,
   ...
 }@allInputs:
 let
   vm = import ./vm.nix allInputs;
+  orca = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.orca;
 in
 {
   imports = [
@@ -225,8 +227,8 @@ in
     reload = config.systemd.services.avm-mounts.script;
   };
 
-  systemd.services.paseo = {
-    description = "Paseo remote agent sessions";
+  systemd.services.orca = {
+    description = "Orca remote agent sessions";
     wantedBy = [ "multi-user.target" ];
     wants = [ "network-online.target" ];
     requires = [ "avm-mounts.service" ];
@@ -236,18 +238,19 @@ in
     ];
     environment = {
       HOME = "/home/${username}";
-      PASEO_LISTEN = "0.0.0.0:6767";
-      PASEO_RELAY_ENABLED = "false";
-      PASEO_WEB_UI_ENABLED = "false";
+      XDG_RUNTIME_DIR = "/run/user/${toString config.users.users.${username}.uid}";
+      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/${toString config.users.users.${username}.uid}/bus";
     };
     serviceConfig = {
       User = username;
       WorkingDirectory = "/home/${username}";
       ExecStart = "${
         lib.getExe config.users.users.${username}.shell
-      } -lc 'exec ${lib.getExe' pkgs.paseo "paseo-server"}'";
+      } -lc 'exec ${lib.getExe' orca "orca"} serve --supervise --no-pairing --bind 0.0.0.0 --port 6768 --refuse-public'";
       Restart = "on-failure";
-      RestartSec = 5;
+      RestartSec = 10;
+      TimeoutStopSec = 90;
+      KillMode = "process";
       UMask = "0077";
     };
   };
@@ -277,6 +280,6 @@ in
     xdg.configFile."shell/".source = lib.mkForce ../common/home/shell/scripts;
     #! compaudit обходит все completion-каталоги в /nix/store, а он на общей FS
     programs.zsh.completionInit = "autoload -U compinit && compinit -C";
-    home.packages = [ pkgs.paseo ];
+    home.packages = [ orca ];
   };
 }

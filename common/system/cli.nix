@@ -22,6 +22,7 @@
     git
     git-lfs
     jq
+    yq
   ];
 
   home-manager = {
