@@ -86,7 +86,9 @@
             ./${hostName}/system
             {
               home-manager.users.${username} = ./${hostName}/home;
-              home-manager.backupFileExtension = "backup";
+              home-manager.backupCommand = pkgs.writeShellScript "home-manager-backup" ''
+                exec ${pkgs.coreutils}/bin/mv --backup=numbered -T -- "$1" "$1.backup"
+              '';
             }
           ];
         };
