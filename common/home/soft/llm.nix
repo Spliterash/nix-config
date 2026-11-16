@@ -11,8 +11,6 @@ in
     llm.opencode
     llm.omp
     pkgs.bubblewrap
-    llm.antigravity-cli
-    llm.antigravity-hub
     # Чтобы не ломались плагины
     (llm.pi.override { useBun = false; })
   ];
