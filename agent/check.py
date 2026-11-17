@@ -68,11 +68,25 @@ git -C "$repo" verify-commit HEAD
 ''', text=True)
 
 
+def check_swap():
+    subprocess.run(["avm", "ssh", "sudo bash -se"], check=True, input=r'''
+device=/dev/disk/by-id/virtio-avm-swap
+test "$(blockdev --getsize64 "$device")" -eq 26843545600
+swapon --show --bytes --noheadings --output NAME,SIZE |
+    awk -v device="$(readlink -f "$device")" -v page="$(getconf PAGESIZE)" '
+        $1 == device && $2 == 26843545600 - page { found = 1 }
+        END { exit !found }
+    '
+echo 'swap: 25 GiB, separate virtio disk, active'
+''', text=True)
+
+
 def main():
     check_nix()
     check_mounts()
     check_signing()
-    for name in ["root", "docker"]:
+    check_swap()
+    for name in ["root", "docker", "swap"]:
         disk = Path.home() / "agent-vm" / "disks" / f"{name}.qcow2"
         with disk.open("rb") as image:
             header = image.read(32)

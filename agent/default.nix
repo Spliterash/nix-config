@@ -19,7 +19,7 @@ in
 
   microvm = {
     hypervisor = "qemu";
-    vcpu = 4;
+    vcpu = 8;
     mem = 26624;
     balloon = true;
 
@@ -37,6 +37,8 @@ in
       "drive.vda.format=qcow2"
       "-set"
       "drive.vdb.format=qcow2"
+      "-set"
+      "drive.vdc.format=qcow2"
     ];
 
     shares = [
@@ -77,14 +79,19 @@ in
             lib.makeBinPath [
               pkgs.coreutils
               pkgs.e2fsprogs
+              pkgs.util-linux
               config.microvm.qemu.package
             ]
           }:$PATH
-          umask 022
+          umask ${if volume.fsType == "swap" then "077" else "022"}
           tmp=$(mktemp -d ${vm.disksDir}/.create-XXXXXX)
           trap 'rm -rf "$tmp"' EXIT
           truncate -s ${toString volume.size}M "$tmp/disk.raw"
-          mkfs.ext4 -q "$tmp/disk.raw"
+          if [ ${lib.escapeShellArg volume.fsType} = swap ]; then
+            mkswap "$tmp/disk.raw"
+          else
+            mkfs.ext4 -q "$tmp/disk.raw"
+          fi
           qemu-img convert -f raw -O qcow2 "$tmp/disk.raw" "$tmp/disk.qcow2"
           mv "$tmp/disk.qcow2" ${lib.escapeShellArg volume.image}
         )
@@ -106,8 +113,19 @@ in
         mountPoint = "/var/lib/docker";
         size = 32768;
       }
+      {
+        image = "${vm.disksDir}/swap.qcow2";
+        imageType = "qcow2";
+        autoCreate = false;
+        mountPoint = null;
+        fsType = "swap";
+        serial = "avm-swap";
+        size = 25600;
+      }
     ];
   };
+
+  swapDevices = [ { device = "/dev/disk/by-id/virtio-avm-swap"; } ];
 
   networking.hostName = vm.name;
   networking.useDHCP = false;
