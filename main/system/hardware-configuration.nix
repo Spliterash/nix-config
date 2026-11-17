@@ -35,7 +35,7 @@
     ];
   };
 
-  fileSystems."/mnt/data" = {
+  fileSystems."/mnt/data_old" = {
     device = "/dev/disk/by-uuid/FAEE5F35EE5EEA01";
     fsType = "ntfs3";
     options = [

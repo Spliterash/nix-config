@@ -41,6 +41,13 @@
             mountpoint = "/persistent";
             options."com.sun:auto-snapshot" = "true";
           };
+          "data" = {
+            type = "zfs_fs";
+            mountpoint = "/mnt/data";
+            options = {
+              "com.sun:auto-snapshot" = "true";
+            };
+          };
           "nix" = {
             type = "zfs_fs";
             mountpoint = "/nix";
