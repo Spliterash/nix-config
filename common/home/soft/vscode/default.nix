@@ -17,6 +17,11 @@ in
     ];
   };
 
+  home.sessionVariables = {
+    EDITOR = "code --wait";
+    VISUAL = "code --wait";
+  };
+
   xdg.configFile."Code/User/settings.json".source =
     config.lib.file.mkOutOfStoreSymlink "${vscodeConfigDir}/settings.json";
   xdg.configFile."Code/User/keybindings.json".source =
