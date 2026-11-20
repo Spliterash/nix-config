@@ -20,10 +20,6 @@
       url = "github:nix-community/nix-jetbrains-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    freesmlauncher = {
-      url = "github:FreesmTeam/FreesmLauncher";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     donutbrowser = {
       url = "github:donutbrowser/donutbrowser";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -61,6 +57,10 @@
     };
     photocraft = {
       url = "file+https://nix-obtainium.invalid/github/storytold/photocraft?asset=photocraft-*-linux-x86_64.deb";
+      flake = false;
+    };
+    freesmlauncher = {
+      url = "file+https://nix-obtainium.invalid/github/FreesmTeam/FreesmLauncher?asset=FreesmLauncher-Linux-Qt6-Portable-*.tar.gz";
       flake = false;
     };
   };

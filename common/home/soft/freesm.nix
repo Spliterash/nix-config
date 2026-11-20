@@ -1,6 +1,6 @@
-{ inputs, system, ... }:
+{ pkgs, ... }:
 {
   home.packages = [
-    inputs.freesmlauncher.packages.${system}.freesmlauncher
+    (pkgs.callPackage ../../packages/freesmlauncher.nix { })
   ];
 }
