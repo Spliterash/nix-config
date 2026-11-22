@@ -42,9 +42,9 @@ in
         "RecordRegion" = "Shift+Print";
         "RecordScreen" = "none";
         "RecordWindow" = "none";
-        "RectangularRegionScreenShot" = "none";
+        "RectangularRegionScreenShot" = "Print";
         "WindowUnderCursorScreenShot" = "none";
-        "_launch" = "Print";
+        "_launch" = "none";
       };
     };
   };

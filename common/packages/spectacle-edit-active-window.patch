@@ -1,0 +1,187 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -80,6 +80,7 @@
+ qt6_generate_wayland_protocol_client_sources(spectacle
+     PRIVATE_CODE
+     FILES
++        ${PLASMA_WAYLAND_PROTOCOLS_DIR}/plasma-window-management.xml
+         ${PLASMA_WAYLAND_PROTOCOLS_DIR}/zkde-screencast-unstable-v1.xml
+ )
+ 
+--- a/src/SpectacleCore.h
++++ b/src/SpectacleCore.h
+@@ -143,7 +143,8 @@
+         Recording,
+     };
+ 
+-    void takeNewScreenshot(ImagePlatform::GrabMode grabMode, int timeout, bool includePointer, bool includeDecorations, bool includeShadow);
++    void takeNewScreenshot(ImagePlatform::GrabMode grabMode, int timeout, bool includePointer, bool includeDecorations, bool includeShadow,
++                           const QRectF &initialSelection = {});
+     void setExportImage(const QImage &image);
+     void showViewerIfGuiMode(bool minimized = false);
+     void doNotify(ScreenCapture type, const ExportManager::Actions &actions, const QUrl &saveUrl);
+@@ -187,6 +188,7 @@
+ 
+     QUrl m_editExistingUrl;
+     QUrl m_outputUrl;
++    QRectF m_initialSelection;
+ 
+     ImagePlatform::GrabMode m_lastGrabMode = ImagePlatform::GrabMode::NoGrabModes;
+     bool m_lastIncludePointer = false; // cli default value
+--- a/src/SpectacleCore.cpp
++++ b/src/SpectacleCore.cpp
+@@ -27,6 +27,7 @@
+ #include "ShortcutActions.h"
+ #include "PlasmaVersion.h"
+ // generated
++#include "qwayland-plasma-window-management.h"
+ #include "settings.h"
+ 
+ #include <KFormat>
+@@ -69,12 +70,99 @@
+ #include <QtMath>
+ #include <qobjectdefs.h>
+ 
++#include <deque>
++#include <utility>
++#include <wayland-client-protocol.h>
++
+ using namespace Qt::StringLiterals;
+ 
+ SpectacleCore *SpectacleCore::s_self = nullptr;
+ static std::unique_ptr<KStatusNotifierItem> s_systemTrayIcon;
+ 
+ static QList<KNotification *> notifications;
++
++namespace
++{
++class WindowGeometry : public QtWayland::org_kde_plasma_window
++{
++public:
++    using QtWayland::org_kde_plasma_window::org_kde_plasma_window;
++
++    ~WindowGeometry() override { destroy(); }
++
++    QRect rect;
++    bool active = false;
++
++private:
++    void org_kde_plasma_window_state_changed(uint32_t flags) override
++    {
++        active = flags & QtWayland::org_kde_plasma_window_management::state_active;
++    }
++
++    void org_kde_plasma_window_geometry(int32_t x, int32_t y, uint32_t width, uint32_t height) override
++    {
++        rect = QRect(x, y, width, height);
++    }
++};
++
++class ActiveWindowQuery : public QtWayland::org_kde_plasma_window_management
++{
++public:
++    ~ActiveWindowQuery() override
++    {
++        if (isInitialized()) {
++            wl_proxy_destroy(reinterpret_cast<wl_proxy *>(object()));
++        }
++    }
++
++    std::deque<WindowGeometry> windows;
++
++private:
++    void org_kde_plasma_window_management_window_with_uuid(uint32_t, const QString &uuid) override
++    {
++        if (auto window = get_window_by_uuid(uuid)) {
++            windows.emplace_back(window);
++        }
++    }
++};
++
++QRect activeWindowRect()
++{
++    if (!KWindowSystem::isPlatformWayland()) {
++        return {};
++    }
++
++    const std::unique_ptr<wl_display, decltype(&wl_display_disconnect)> display(wl_display_connect(nullptr), wl_display_disconnect);
++    if (!display) {
++        return {};
++    }
++    const std::unique_ptr<wl_registry, decltype(&wl_registry_destroy)> registry(wl_display_get_registry(display.get()), wl_registry_destroy);
++    if (!registry) {
++        return {};
++    }
++    ActiveWindowQuery query;
++    constexpr wl_registry_listener listener{
++        [](void *data, wl_registry *registry, uint32_t name, const char *interface, uint32_t version) {
++            if (version >= 17 && qstrcmp(interface, "org_kde_plasma_window_management") == 0) {
++                static_cast<ActiveWindowQuery *>(data)->init(registry, name, 17);
++            }
++        },
++        [](void *, wl_registry *, uint32_t) {},
++    };
++    wl_registry_add_listener(registry.get(), &listener, &query);
++    // Announce the global, announce its windows, then receive their initial state.
++    if (wl_display_roundtrip(display.get()) < 0 || !query.isInitialized()
++        || wl_display_roundtrip(display.get()) < 0 || wl_display_roundtrip(display.get()) < 0) {
++        return {};
++    }
++    for (const auto &window : query.windows) {
++        if (window.active) {
++            return window.rect;
++        }
++    }
++    return {};
++}
++}
+ 
+ SpectacleCore::SpectacleCore(QObject *parent)
+     : QObject(parent)
+@@ -227,10 +315,16 @@
+         ExportManager::instance()->updateTimestamp();
+         initCaptureWindows(CaptureWindow::Image);
+         SpectacleWindow::setTitleForAll(SpectacleWindow::Unsaved);
+-        SpectacleWindow::setVisibilityForAll(QWindow::FullScreen);
+         // SelectionEditor::reset has to be delayed until after all the DPRs are correct on Wayland.
+         connect(m_captureWindows.front().get(), &CaptureWindow::allExposed, //
+-                SelectionEditor::instance(), &SelectionEditor::reset, Qt::SingleShotConnection);
++                SelectionEditor::instance(), [initialSelection = std::exchange(m_initialSelection, {})] {
++            auto editor = SelectionEditor::instance();
++            editor->reset();
++            if (!initialSelection.isEmpty()) {
++                editor->selection()->setRect(initialSelection);
++            }
++        }, Qt::SingleShotConnection);
++        SpectacleWindow::setVisibilityForAll(QWindow::FullScreen);
+     });
+ 
+     // The behavior happens to be very similar right now, so we use a shared base function
+@@ -1180,7 +1274,8 @@
+     }
+ }
+ 
+-void SpectacleCore::takeNewScreenshot(ImagePlatform::GrabMode grabMode, int timeout, bool includePointer, bool includeDecorations, bool includeWindowShadow)
++void SpectacleCore::takeNewScreenshot(ImagePlatform::GrabMode grabMode, int timeout, bool includePointer, bool includeDecorations,
++                                     bool includeWindowShadow, const QRectF &initialSelection)
+ {
+     // Clear when a new screenshot is taken to avoid overwriting
+     // the previous file with a completely unrelated image.
+@@ -1190,6 +1285,7 @@
+     m_delayAnimation->stop();
+ 
+     m_lastGrabMode = grabMode;
++    m_initialSelection = initialSelection;
+     m_lastIncludePointer = includePointer;
+     m_lastIncludeDecorations = includeDecorations;
+     m_lastIncludeShadow = includeWindowShadow;
+@@ -1653,7 +1749,8 @@
+     } else if (actionName == ShortcutActions::self()->currentScreenAction()->objectName()) {
+         takeNewScreenshot(CaptureModeModel::CurrentScreen, 0);
+     } else if (actionName == ShortcutActions::self()->activeWindowAction()->objectName()) {
+-        takeNewScreenshot(CaptureModeModel::ActiveWindow, 0);
++        takeNewScreenshot(ImagePlatform::GrabMode::PerScreenImageNative, 0, Settings::includePointer(),
++                          Settings::includeDecorations(), Settings::includeShadow(), activeWindowRect());
+     } else if (actionName == ShortcutActions::self()->windowUnderCursorAction()->objectName()) {
+         takeNewScreenshot(CaptureModeModel::WindowUnderCursor, 0);
+     } else if (actionName == ShortcutActions::self()->regionAction()->objectName()) {

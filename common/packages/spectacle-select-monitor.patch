@@ -1,0 +1,20 @@
+--- a/src/Gui/CaptureOverlay.qml
++++ b/src/Gui/CaptureOverlay.qml
+@@ -59,6 +59,17 @@ MouseArea {
+     anchors.fill: parent
+     enabled: !SpectacleCore.videoPlatform.isRecording
+ 
++    TapHandler {
++        enabled: !SpectacleCore.videoMode
++        acceptedButtons: Qt.ForwardButton
++        onTapped: (point, button) => {
++            // Qt Quick bypasses acceptedButtons for wheel events.
++            if (button === Qt.ForwardButton) {
++                SelectionEditor.selection.rect = root.viewportRect
++            }
++        }
++    }
++
+     AnimatedLoader {
+         id: annotationsLoader
+         anchors.fill: parent

@@ -1,4 +1,9 @@
-{ pkgs, lib, username, ... }:
+{
+  pkgs,
+  lib,
+  username,
+  ...
+}:
 {
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
@@ -31,5 +36,28 @@
     askPassword = "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
   };
   programs.kdeconnect.enable = true;
-  environment.plasma6.excludePackages = [ pkgs.kdePackages.kate ];
+  environment.plasma6.excludePackages = [
+    pkgs.kdePackages.kate
+  ];
+  nixpkgs.overlays = [
+    (_final: prev: {
+      kdePackages = prev.kdePackages.overrideScope (
+        _kdeFinal: kdePrev: {
+          spectacle =
+            (kdePrev.spectacle.override {
+              tesseractLanguages = [
+                "eng"
+                "rus"
+              ];
+            }).overrideAttrs
+              (old: {
+                patches = (old.patches or [ ]) ++ [
+                  ../packages/spectacle-edit-active-window.patch
+                  ../packages/spectacle-select-monitor.patch
+                ];
+              });
+        }
+      );
+    })
+  ];
 }
