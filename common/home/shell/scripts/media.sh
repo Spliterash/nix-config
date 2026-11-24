@@ -66,6 +66,23 @@ ffmp4() {
            "$@" \
            "$output"
 }
+
+tgmp4() {
+  if [ "$#" -ne 1 ]; then
+    printf '%s\n' 'Использование: tgmp4 ВИДЕО' >&2
+    return 2
+  fi
+
+  local src="$1" stem
+  case "$src" in /*) ;; *) src="$PWD/$src" ;; esac
+  stem="$src"
+  case "${src##*/}" in ?*.*) stem="${src%.*}" ;; esac
+
+  ffmpeg -hide_banner -loglevel error -n -i "$src" -an \
+    -vf 'scale=trunc(iw/2)*2:trunc(ih/2)*2' \
+    -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${stem}_tg.mp4"
+}
+
 # Скачивание аудио в текущий каталог и конвертация в опус с центральной квадратной обрезкой обложки
 # PNG перед обрезкой исключает повторное сжатие с потерями, особенно WebP с JPEG-параметрами качества.
 alias yta='yt-dlp \
