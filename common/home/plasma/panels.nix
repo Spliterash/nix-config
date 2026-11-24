@@ -1,9 +1,11 @@
-{ ... }:
+{ lib, ... }:
 let
   meta = import ./meta.nix;
 in
 {
-  # ?! Если раскоментить импорт этого файла в default.nix, то слетают иконки после каждого едита
+  # Штатный preCommands удаляет весь appletsrc вместе с позициями иконок.
+  programs.plasma.startup.desktopScript.panels.preCommands = lib.mkForce "";
+
   programs.plasma.panels = [
     # Windows-like panel at the bottom
     {

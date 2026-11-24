@@ -7,6 +7,6 @@
     ./input.nix
     ./kwin.nix
     ./apps-config.nix
-    # ./panels.nix
+    ./panels.nix
   ];
 }
