@@ -1,27 +1,8 @@
-{ lib, ... }:
-let
-  meta = import ./meta.nix;
-  mkPlasmaBinds =
-    shortcuts:
-    builtins.listToAttrs (
-      map (shortcut: {
-        name = builtins.replaceStrings [ " " ] [ "-" ] shortcut.name;
-        value = {
-          name = shortcut.name;
-          command = shortcut.command;
-          key = builtins.replaceStrings [ "Mod" ] [ "Meta" ] shortcut.keys;
-        };
-      }) shortcuts
-    );
-in
+{ ... }:
 {
   #? https://github.com/nix-community/plasma-manager
   #? https://nix-community.github.io/plasma-manager/options.xhtml
   programs.plasma = {
-    hotkeys.commands = lib.attrsets.mergeAttrsList [
-      (mkPlasmaBinds meta.shortcuts)
-    ];
-
     shortcuts = {
       "plasmashell"."activate application launcher" = "Meta";
 

@@ -58,18 +58,6 @@
         "type": "github"
       }
     },
-    "cockpit-tools": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-Mw5QnR7uIzPt1vZYxnXeb6Kdzj8iZE61V19Kl4nwKVU=",
-        "type": "file",
-        "url": "https://github.com/jlcodes99/cockpit-tools/releases/download/v1.4.2/Cockpit.Tools_1.4.2_amd64.deb#1.4.2"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://nix-obtainium.invalid/github/jlcodes99/cockpit-tools?asset=Cockpit.Tools_%2A_amd64.deb"
-      }
-    },
     "crane": {
       "locked": {
         "lastModified": 1793836618,
@@ -559,7 +547,6 @@
     "root": {
       "inputs": {
         "bootvine": "bootvine",
-        "cockpit-tools": "cockpit-tools",
         "disko": "disko",
         "donutbrowser": "donutbrowser",
         "freesmlauncher": "freesmlauncher",

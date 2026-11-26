@@ -29,7 +29,7 @@
     ./soft/vscode
     ./soft/wezterm
     ./soft/furryfox
-    ./soft/sourcegit.nix
+    ./soft/sourcegit
     ./soft/keepassxc.nix
     ./soft/vesktop.nix
     ./soft/freesm.nix

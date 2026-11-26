@@ -1,0 +1,90 @@
+--- a/src/Models/Watcher.cs
++++ b/src/Models/Watcher.cs
+@@ -30,50 +30,19 @@
+             _root = new DirectoryInfo(fullpath).FullName;
+             _watchers = new List<FileSystemWatcher>();
+ 
+-            var testGitDir = new DirectoryInfo(Path.Combine(fullpath, ".git")).FullName;
+-            var desiredDir = new DirectoryInfo(gitDir).FullName;
+-            if (testGitDir.Equals(desiredDir, StringComparison.Ordinal))
+-            {
+-                var combined = new FileSystemWatcher();
+-                combined.Path = fullpath;
+-                combined.Filter = "*";
+-                combined.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName | NotifyFilters.FileName;
+-                combined.IncludeSubdirectories = true;
+-                combined.Created += OnRepositoryChanged;
+-                combined.Renamed += OnRepositoryChanged;
+-                combined.Changed += OnRepositoryChanged;
+-                combined.Deleted += OnRepositoryChanged;
+-                combined.EnableRaisingEvents = false;
+-
+-                _watchers.Add(combined);
+-            }
+-            else
+-            {
+-                var wc = new FileSystemWatcher();
+-                wc.Path = fullpath;
+-                wc.Filter = "*";
+-                wc.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName | NotifyFilters.FileName;
+-                wc.IncludeSubdirectories = true;
+-                wc.Created += OnWorkingCopyChanged;
+-                wc.Renamed += OnWorkingCopyChanged;
+-                wc.Changed += OnWorkingCopyChanged;
+-                wc.Deleted += OnWorkingCopyChanged;
+-                wc.EnableRaisingEvents = false;
+-
+-                var git = new FileSystemWatcher();
+-                git.Path = gitDir;
+-                git.Filter = "*";
+-                git.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName | NotifyFilters.FileName;
+-                git.IncludeSubdirectories = true;
+-                git.Created += OnGitDirChanged;
+-                git.Renamed += OnGitDirChanged;
+-                git.Changed += OnGitDirChanged;
+-                git.Deleted += OnGitDirChanged;
+-                git.EnableRaisingEvents = false;
+-
+-                _watchers.Add(wc);
+-                _watchers.Add(git);
+-            }
++            // Working copy isn't watched: recursive inotify over it (and nested worktrees) exhausts
++            // max_user_watches. It's refreshed on tab switch and window activation instead.
++            var git = new FileSystemWatcher();
++            git.Path = gitDir;
++            git.Filter = "*";
++            git.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName | NotifyFilters.FileName;
++            git.IncludeSubdirectories = true;
++            git.Created += OnGitDirChanged;
++            git.Renamed += OnGitDirChanged;
++            git.Changed += OnGitDirChanged;
++            git.Deleted += OnGitDirChanged;
++            git.EnableRaisingEvents = false;
++            _watchers.Add(git);
+ 
+             _timer = new Timer(Tick, null, 100, 100);
+ 
+--- a/src/ViewModels/Launcher.cs
++++ b/src/ViewModels/Launcher.cs
+@@ -521,7 +521,10 @@
+                 return;
+ 
+             if (_activePage is { Data: Repository repo })
++            {
+                 _activeWorkspace.ActiveIdx = _activeWorkspace.Repositories.IndexOf(repo.FullPath);
++                repo.MarkWorkingCopyDirtyManually();
++            }
+ 
+             var builder = new StringBuilder(512);
+             builder.Append(string.IsNullOrEmpty(_activePage.Node.Name) ? "Repositories" : _activePage.Node.Name);
+--- a/src/Views/Launcher.axaml.cs
++++ b/src/Views/Launcher.axaml.cs
+@@ -103,6 +103,8 @@
+             {
+                 if (!IsActive && DataContext is ViewModels.Launcher { CommandPalette: { } } vm)
+                     vm.CommandPalette = null;
++                else if (IsActive && DataContext is ViewModels.Launcher { ActivePage.Data: ViewModels.Repository repo })
++                    repo.MarkWorkingCopyDirtyManually();
+             }
+ 
+             if (OperatingSystem.IsMacOS() && WindowState != WindowState.FullScreen)

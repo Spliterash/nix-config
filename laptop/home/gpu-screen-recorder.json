@@ -1,0 +1,50 @@
+{
+  "main": {
+    "config_file_version": 3,
+    "hotkeys_enable_option": "enable_hotkeys_no_grab"
+  },
+  "record": {
+    "record_options": {
+      "advanced_view": true,
+      "audio_track_item": [
+        { "name": "System audio", "audio_inputs": [], "application_audio_invert": true },
+        { "name": "Microphone", "audio_inputs": ["device:default_input"], "application_audio_invert": false },
+        { "name": "AyuGram", "audio_inputs": ["app:AyuGram", "app:.AyuGram-wrapped", "app:Telegram Desktop"], "application_audio_invert": false },
+        { "name": "Firefox", "audio_inputs": ["app:Firefox"], "application_audio_invert": false },
+        { "name": "Vesktop", "audio_inputs": ["app:vesktop", "app:WEBRTC VoiceEngine"], "application_audio_invert": false },
+        { "name": "mpv", "audio_inputs": ["app:mpv"], "application_audio_invert": false },
+        { "name": "Other apps", "audio_inputs": ["app:AyuGram", "app:.AyuGram-wrapped", "app:Telegram Desktop", "app:Firefox", "app:vesktop", "app:WEBRTC VoiceEngine", "app:mpv"], "application_audio_invert": true }
+      ]
+    }
+  },
+  "replay": {
+    "turn_on_replay_automatically_mode": "turn_on_at_system_startup",
+    "only_start_replay_if_power_supply_connected": false,
+    "time": 600,
+    "save_directory": "/home/spliterash/Videos/Replays",
+    "container": "mp4",
+    "save_hotkey": { "key": 76, "modifiers": 4 },
+    "record_options": {
+      "record_area_option": "screen",
+      "advanced_view": true,
+      "fps": 60,
+      "codec": "hevc",
+      "audio_codec": "opus",
+      "show_notifications": true,
+      "audio_track_item": [
+        { "name": "System audio", "audio_inputs": [], "application_audio_invert": true },
+        { "name": "Microphone", "audio_inputs": ["device:default_input"], "application_audio_invert": false },
+        { "name": "AyuGram", "audio_inputs": ["app:AyuGram", "app:.AyuGram-wrapped", "app:Telegram Desktop"], "application_audio_invert": false },
+        { "name": "Firefox", "audio_inputs": ["app:Firefox"], "application_audio_invert": false },
+        { "name": "Vesktop", "audio_inputs": ["app:vesktop", "app:WEBRTC VoiceEngine"], "application_audio_invert": false },
+        { "name": "mpv", "audio_inputs": ["app:mpv"], "application_audio_invert": false },
+        { "name": "Other apps", "audio_inputs": ["app:AyuGram", "app:.AyuGram-wrapped", "app:Telegram Desktop", "app:Firefox", "app:vesktop", "app:WEBRTC VoiceEngine", "app:mpv"], "application_audio_invert": true }
+      ]
+    }
+  },
+  "screenshot": {
+    "take_screenshot_hotkey": { "key": 0, "modifiers": 0 },
+    "take_screenshot_region_hotkey": { "key": 0, "modifiers": 0 },
+    "take_screenshot_window_hotkey": { "key": 0, "modifiers": 0 }
+  }
+}

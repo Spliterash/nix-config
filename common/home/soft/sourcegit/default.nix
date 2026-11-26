@@ -1,7 +1,9 @@
 { config, pkgs, ... }:
 {
-  home.packages = with pkgs; [
-    sourcegit
+  home.packages = [
+    (pkgs.sourcegit.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ./sourcegit-metadata-only.patch ];
+    }))
   ];
   mutableJson."${config.home.homeDirectory}/.config/SourceGit/preference.json".settings = {
     theme = "dark";

@@ -1,0 +1,356 @@
+{
+  "main": {
+    "config_file_version": 3,
+    "exclude_metadata": false,
+    "hotkeys_enable_option": "enable_hotkeys_no_grab",
+    "joystick_hotkeys_enable_option": "disable_hotkeys",
+    "language": "",
+    "notification_speed": "fast",
+    "rounded_corners": true,
+    "show_hide_hotkey": {
+      "key": 26,
+      "modifiers": 16
+    },
+    "show_tray_icon": true,
+    "software_encoding_warning_shown": false,
+    "tint_color": "amd",
+    "wayland_warning_shown": true
+  },
+  "record": {
+    "container": "mp4",
+    "name_after_captured_application": "no",
+    "name_video_file_after_game": false,
+    "organize_into_folders": "no",
+    "pause_unpause_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "record_options": {
+      "advanced_view": true,
+      "audio_codec": "opus",
+      "audio_track_item": [
+        {
+          "application_audio_invert": true,
+          "audio_inputs": [],
+          "name": "System audio"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "device:default_input"
+          ],
+          "name": "Microphone"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:AyuGram",
+            "app:.AyuGram-wrapped",
+            "app:Telegram Desktop"
+          ],
+          "name": "AyuGram"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:Firefox"
+          ],
+          "name": "Firefox"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:vesktop",
+            "app:WEBRTC VoiceEngine"
+          ],
+          "name": "Vesktop"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:mpv"
+          ],
+          "name": "mpv"
+        },
+        {
+          "application_audio_invert": true,
+          "audio_inputs": [
+            "app:AyuGram",
+            "app:.AyuGram-wrapped",
+            "app:Telegram Desktop",
+            "app:Firefox",
+            "app:vesktop",
+            "app:WEBRTC VoiceEngine",
+            "app:mpv"
+          ],
+          "name": "Other apps"
+        }
+      ],
+      "change_video_resolution": false,
+      "codec": "auto",
+      "color_range": "limited",
+      "enable_vulkan_video_encoding": false,
+      "fps": 60,
+      "framerate_mode": "auto",
+      "low_power_mode": false,
+      "overclock": false,
+      "pixel_format": "yuv420",
+      "record_area_height": 0,
+      "record_area_option": "focused_monitor",
+      "record_area_width": 0,
+      "record_cursor": true,
+      "show_notifications": true,
+      "use_led_indicator": false,
+      "video_bitrate": 40000,
+      "video_height": 0,
+      "video_quality": "very_high",
+      "video_width": 0,
+      "webcam_camera_fps": 0,
+      "webcam_camera_height": 0,
+      "webcam_camera_width": 0,
+      "webcam_flip_horizontally": false,
+      "webcam_height": 30,
+      "webcam_source": "",
+      "webcam_video_format": "auto",
+      "webcam_width": 30,
+      "webcam_x": 0,
+      "webcam_y": 0
+    },
+    "save_directory": "\/home\/spliterash\/Videos",
+    "save_video_in_game_folder": false,
+    "start_stop_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "start_stop_region_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "start_stop_window_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    }
+  },
+  "replay": {
+    "container": "mp4",
+    "name_after_captured_application": "no",
+    "name_video_file_after_game": false,
+    "only_start_replay_if_power_supply_connected": false,
+    "organize_into_folders": "no",
+    "record_options": {
+      "advanced_view": true,
+      "audio_codec": "opus",
+      "audio_track_item": [
+        {
+          "application_audio_invert": true,
+          "audio_inputs": [],
+          "name": "System audio"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "device:default_input"
+          ],
+          "name": "Microphone"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:AyuGram",
+            "app:.AyuGram-wrapped",
+            "app:Telegram Desktop"
+          ],
+          "name": "AyuGram"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:Firefox"
+          ],
+          "name": "Firefox"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:vesktop",
+            "app:WEBRTC VoiceEngine"
+          ],
+          "name": "Vesktop"
+        },
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "app:mpv"
+          ],
+          "name": "mpv"
+        },
+        {
+          "application_audio_invert": true,
+          "audio_inputs": [
+            "app:AyuGram",
+            "app:.AyuGram-wrapped",
+            "app:Telegram Desktop",
+            "app:Firefox",
+            "app:vesktop",
+            "app:WEBRTC VoiceEngine",
+            "app:mpv"
+          ],
+          "name": "Other apps"
+        }
+      ],
+      "change_video_resolution": false,
+      "codec": "hevc",
+      "color_range": "limited",
+      "enable_vulkan_video_encoding": false,
+      "fps": 60,
+      "framerate_mode": "auto",
+      "low_power_mode": false,
+      "overclock": false,
+      "pixel_format": "yuv420",
+      "record_area_height": 1080,
+      "record_area_option": "DP-1",
+      "record_area_width": 1920,
+      "record_cursor": true,
+      "show_notifications": true,
+      "use_led_indicator": false,
+      "video_bitrate": 40000,
+      "video_height": 1080,
+      "video_quality": "custom",
+      "video_width": 1920,
+      "webcam_camera_fps": 0,
+      "webcam_camera_height": 0,
+      "webcam_camera_width": 0,
+      "webcam_flip_horizontally": false,
+      "webcam_height": 30,
+      "webcam_source": "",
+      "webcam_video_format": "auto",
+      "webcam_width": 30,
+      "webcam_x": 0,
+      "webcam_y": 0
+    },
+    "replay_storage": "ram",
+    "restart_replay_on_save": false,
+    "save_10_min_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "save_1_min_hotkey": {
+      "key": 77,
+      "modifiers": 4
+    },
+    "save_directory": "\/home\/spliterash\/Videos\/Replays",
+    "save_hotkey": {
+      "key": 76,
+      "modifiers": 4
+    },
+    "save_video_in_game_folder": false,
+    "start_stop_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "time": 600,
+    "turn_on_replay_automatically_mode": "turn_on_at_system_startup"
+  },
+  "screenshot": {
+    "change_image_resolution": false,
+    "custom_script": "",
+    "image_format": "jpg",
+    "image_height": 1080,
+    "image_quality": "very_high",
+    "image_width": 1920,
+    "name_after_captured_application": "no",
+    "name_screenshot_file_after_game": false,
+    "organize_into_folders": "no",
+    "record_area_option": "focused_monitor",
+    "record_cursor": true,
+    "save_directory": "\/home\/spliterash\/Pictures",
+    "save_screenshot_in_game_folder": false,
+    "save_screenshot_to_clipboard": false,
+    "save_screenshot_to_disk": true,
+    "show_notifications": true,
+    "take_screenshot_hotkey": {
+      "key": 81,
+      "modifiers": 4
+    },
+    "take_screenshot_region_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "take_screenshot_window_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "use_led_indicator": false
+  },
+  "streaming": {
+    "custom": {
+      "container": "flv",
+      "key": "",
+      "url": ""
+    },
+    "kick": {
+      "key": "",
+      "url": ""
+    },
+    "record_options": {
+      "advanced_view": false,
+      "audio_codec": "opus",
+      "audio_track_item": [
+        {
+          "application_audio_invert": false,
+          "audio_inputs": [
+            "device:default_output"
+          ],
+          "name": ""
+        }
+      ],
+      "change_video_resolution": false,
+      "codec": "auto",
+      "color_range": "limited",
+      "enable_vulkan_video_encoding": false,
+      "fps": 60,
+      "framerate_mode": "auto",
+      "low_power_mode": false,
+      "overclock": false,
+      "pixel_format": "yuv420",
+      "record_area_height": 1080,
+      "record_area_option": "focused_monitor",
+      "record_area_width": 1920,
+      "record_cursor": true,
+      "show_notifications": true,
+      "use_led_indicator": false,
+      "video_bitrate": 8000,
+      "video_height": 1080,
+      "video_quality": "custom",
+      "video_width": 1920,
+      "webcam_camera_fps": 0,
+      "webcam_camera_height": 0,
+      "webcam_camera_width": 0,
+      "webcam_flip_horizontally": false,
+      "webcam_height": 30,
+      "webcam_source": "",
+      "webcam_video_format": "auto",
+      "webcam_width": 30,
+      "webcam_x": 0,
+      "webcam_y": 0
+    },
+    "rumble": {
+      "key": ""
+    },
+    "service": "twitch",
+    "start_stop_hotkey": {
+      "key": 0,
+      "modifiers": 0
+    },
+    "twitch": {
+      "key": ""
+    },
+    "whip": {
+      "bearer_token": "",
+      "url": ""
+    },
+    "youtube": {
+      "key": ""
+    }
+  }
+}
